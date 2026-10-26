@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { CloudSun, Plug, Plus, Trash2 } from "lucide-react";
+import { Camera, Check, CloudSun, Megaphone, Plus, Search, ShoppingBag, Trash2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { PageBody } from "@/components/PageBody";
 import { formatDate, formatValue } from "@/components/result/format";
@@ -13,6 +13,22 @@ import { useMe } from "./_layout";
 
 /** 詳しい画面のグラフに出す日数 */
 const DAYS = 90;
+
+const ICONS: Record<SourceDefinition["icon"], LucideIcon> = {
+  orders: ShoppingBag,
+  ads: Megaphone,
+  social: Camera,
+  weather: CloudSun,
+};
+
+function SourceIcon({ icon }: { icon: SourceDefinition["icon"] }) {
+  const Icon = ICONS[icon];
+  return (
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white">
+      <Icon className="size-5 text-black/50" />
+    </span>
+  );
+}
 
 function Sparkline({ values }: { values: (number | null)[] }) {
   const points = values.map((v, i) => [i, v] as const).filter((p): p is readonly [number, number] => p[1] !== null);
@@ -30,13 +46,14 @@ function Sparkline({ values }: { values: (number | null)[] }) {
   );
 }
 
-/** 店がつないだデータ源 (プラグイン) の一覧。追加、外す、行を押すと設定と数字 */
+/** データ源 (プラグイン)。上につないでいるもの、下に使えるものの一覧 (連携) */
 export default function Sources() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
   const me = useMe();
   const queryClient = useQueryClient();
-  const [adding, setAdding] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const [adding, setAdding] = useState<SourceDefinition | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const sources = useQuery({ queryKey: ["sources"], queryFn: getSources });
   const data = useQuery({ queryKey: ["data"], queryFn: getData });
@@ -56,19 +73,27 @@ export default function Sources() {
   const available = sources.data?.available ?? [];
   const connected = sources.data?.connected ?? [];
   const definitionOf = (id: string) => available.find((s) => s.id === id)!;
+  const isConnected = (id: string) => connected.some((c) => c.sourceId === id);
   const lastDate = data.data?.dates[data.data.dates.length - 1];
   const open = openId ? connected.find((c) => c.sourceId === openId) : undefined;
+  const query = keyword.trim().toLowerCase();
+  const catalog = query
+    ? available.filter((s) => [s.label.en, s.label.ja, s.description.en, s.description.ja, s.modeledOn].some((text) => text.toLowerCase().includes(query)))
+    : available;
 
   return (
     <PageBody
       title={t("sources.title")}
       action={
-        !demo && (
-          <button type="button" className="button-primary" onClick={() => setAdding(true)}>
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">{t("sources.add")}</span>
-          </button>
-        )
+        <label className="flex h-9 items-center gap-2 rounded-2xl border border-black/20 bg-white px-3 shadow focus-within:border-black">
+          <Search className="size-4 text-black/50" />
+          <input
+            className="w-32 bg-transparent text-sm outline-none placeholder:text-black/50 sm:w-48"
+            value={keyword}
+            placeholder={t("sources.search")}
+            onChange={(event) => setKeyword(event.target.value)}
+          />
+        </label>
       }
     >
       {sources.isPending ? (
@@ -76,38 +101,67 @@ export default function Sources() {
       ) : sources.isError ? (
         <p className="pl-2 text-sm text-down">{t("common.error")}</p>
       ) : (
-        <div>
-          {connected.map((connection) => {
-            const source = definitionOf(connection.sourceId);
-            const Icon = source.kind === "live" ? CloudSun : Plug;
-            return (
-              <div
-                key={connection.sourceId}
-                className="group flex items-center gap-3 border-b border-black/20 px-3 py-3 transition-colors hover:rounded-2xl hover:bg-black/10"
-              >
-                <Icon className="size-4 shrink-0 text-black/50" />
-                <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpenId(connection.sourceId)}>
-                  <p className="truncate text-sm">{source.label[locale]}</p>
-                  <p className="mt-0.5 truncate text-xs text-black/50">
-                    {source.kind === "live" ? t("sources.live") : t("sources.simulated")}
-                    {" ・ "}
-                    {source.modeledOn}
-                    {" ・ "}
-                    {t("sources.metrics", { count: source.metrics.length })}
-                    {lastDate && ` ・ ${t("sources.until", { date: formatDate(lastDate, locale) })}`}
-                  </p>
-                </button>
-                {!demo && (
-                  <RowMenu
-                    ariaLabel={t("sources.actions")}
-                    disabled={remove.isPending}
-                    items={[{ label: t("sources.remove"), icon: Trash2, danger: true, onSelect: () => remove.mutate(connection.sourceId) }]}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <section className="space-y-6">
+          <div>
+            <h2 className="px-3 pb-2 text-sm font-semibold">{t("sources.connected")}</h2>
+            {connected.map((connection) => {
+              const source = definitionOf(connection.sourceId);
+              return (
+                <div key={connection.sourceId} className="group flex items-center gap-2 rounded-2xl p-3 transition-colors hover:bg-black/10">
+                  <SourceIcon icon={source.icon} />
+                  <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpenId(connection.sourceId)}>
+                    <p className="truncate text-sm">{source.label[locale]}</p>
+                    <p className="truncate text-xs text-black/50">
+                      {source.kind === "live" ? t("sources.live") : t("sources.simulated")}
+                      {" ・ "}
+                      {source.modeledOn}
+                      {lastDate && ` ・ ${t("sources.until", { date: formatDate(lastDate, locale) })}`}
+                    </p>
+                  </button>
+                  {!demo && (
+                    <RowMenu
+                      ariaLabel={t("sources.actions")}
+                      disabled={remove.isPending}
+                      items={[{ label: t("sources.remove"), icon: Trash2, danger: true, onSelect: () => remove.mutate(connection.sourceId) }]}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div>
+            <h2 className="px-3 pb-2 text-sm font-semibold">{t("sources.catalog")}</h2>
+            <div className="grid gap-1 sm:grid-cols-2">
+              {catalog.map((source) => (
+                <div key={source.id} className="group flex items-center gap-2 rounded-2xl p-3 transition-colors hover:bg-black/10">
+                  <SourceIcon icon={source.icon} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">{source.label[locale]}</p>
+                    <p className="truncate text-xs text-black/50">{source.description[locale]}</p>
+                  </div>
+                  {isConnected(source.id) ? (
+                    <span className="inline-flex size-8 shrink-0 items-center justify-center text-accent" title={t("sources.isConnected")}>
+                      <Check className="size-4" />
+                    </span>
+                  ) : (
+                    !demo && (
+                      <button
+                        className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-black/50 hover:bg-black/10 hover:text-black"
+                        type="button"
+                        aria-label={t("sources.addTitle", { name: source.label[locale] })}
+                        title={t("sources.connect")}
+                        onClick={() => setAdding(source)}
+                      >
+                        <Plus className="size-4" />
+                      </button>
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
       {open && (
@@ -121,12 +175,12 @@ export default function Sources() {
       )}
       {adding && (
         <AddSource
-          options={available.filter((s) => !connected.some((c) => c.sourceId === s.id))}
-          connectedIds={connected.map((c) => c.sourceId)}
+          source={adding}
+          missing={adding.dependsOn.filter((id) => !isConnected(id)).map((id) => definitionOf(id).label[locale])}
           cities={me.data?.cities ?? []}
-          onClose={() => setAdding(false)}
+          onClose={() => setAdding(null)}
           onAdded={() => {
-            setAdding(false);
+            setAdding(null);
             refresh();
           }}
         />
@@ -191,106 +245,80 @@ function SourceDetail({
   );
 }
 
+/** 連携の「＋」から開く。データ源が宣言した設定の項目を入れてつなぐ */
 function AddSource({
-  options,
-  connectedIds,
+  source,
+  missing,
   cities,
   onClose,
   onAdded,
 }: {
-  options: SourceDefinition[];
-  connectedIds: string[];
+  source: SourceDefinition;
+  /** 値を作るのに要るのに、まだつないでいないデータ源の名前 */
+  missing: string[];
   cities: { id: string; label: string }[];
   onClose: () => void;
   onAdded: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
-  const [sourceId, setSourceId] = useState(options[0]?.id ?? "");
   const [settings, setSettings] = useState<Record<string, string>>({});
-  const source = options.find((s) => s.id === sourceId);
-  // 値を作るのに要るデータ源で、まだつないでいないもの (つなげる候補の中にある)
-  const missing = source ? source.dependsOn.filter((id) => !connectedIds.includes(id)) : [];
   const add = useMutation({
-    mutationFn: () => connectSource(sourceId, settings),
+    mutationFn: () => connectSource(source.id, settings),
     onSuccess: onAdded,
     onError: (error: Error) => toast.error(error.message),
   });
 
   return (
-    <Modal title={t("sources.add")} onClose={onClose}>
-      {options.length === 0 ? (
-        <p className="px-6 pb-6 text-sm text-black/50">{t("sources.allConnected")}</p>
-      ) : (
-        <form
-          className="space-y-4 px-6 pb-6"
-          onSubmit={(event) => {
-            event.preventDefault();
-            add.mutate();
-          }}
-        >
-          <label className="block">
-            <span className="mb-1 block text-xs">{t("sources.source")}</span>
-            <select
-              className="input"
-              value={sourceId}
-              onChange={(event) => {
-                setSourceId(event.target.value);
-                setSettings({});
-              }}
-            >
-              {options.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label[locale]} ({option.modeledOn})
-                </option>
-              ))}
-            </select>
-          </label>
-          {source?.settings
-            .filter((field) => field.type !== "seed")
-            .map((field) => (
-              <label key={field.key} className="block">
-                <span className="mb-1 block text-xs">{field.label[locale]}</span>
-                {field.type === "city" ? (
-                  <select
-                    className="input"
-                    required
-                    value={settings[field.key] ?? ""}
-                    onChange={(event) => setSettings({ ...settings, [field.key]: event.target.value })}
-                  >
-                    <option value="" disabled />
-                    {cities.map((city) => (
-                      <option key={city.id} value={city.id}>
-                        {city.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    className="input"
-                    type="date"
-                    required
-                    value={settings[field.key] ?? ""}
-                    onChange={(event) => setSettings({ ...settings, [field.key]: event.target.value })}
-                  />
-                )}
-              </label>
-            ))}
-          {missing.length > 0 && (
-            <p className="text-sm text-down">
-              {t("sources.needs", { names: missing.map((id) => options.find((o) => o.id === id)?.label[locale] ?? id).join(", ") })}
-            </p>
-          )}
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" className="button-secondary" onClick={onClose}>
-              {t("common.cancel")}
-            </button>
-            <button type="submit" className="button-primary" disabled={add.isPending || missing.length > 0}>
-              {t("sources.connect")}
-            </button>
-          </div>
-        </form>
-      )}
+    <Modal title={t("sources.addTitle", { name: source.label[locale] })} onClose={onClose}>
+      <form
+        className="space-y-4 px-6 pb-6"
+        onSubmit={(event) => {
+          event.preventDefault();
+          add.mutate();
+        }}
+      >
+        {source.settings
+          .filter((field) => field.type !== "seed")
+          .map((field) => (
+            <label key={field.key} className="block">
+              <span className="mb-1 block text-xs">{field.label[locale]}</span>
+              {field.type === "city" ? (
+                <select
+                  className="input"
+                  required
+                  autoFocus
+                  value={settings[field.key] ?? ""}
+                  onChange={(event) => setSettings({ ...settings, [field.key]: event.target.value })}
+                >
+                  <option value="" disabled />
+                  {cities.map((city) => (
+                    <option key={city.id} value={city.id}>
+                      {city.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="input"
+                  type="date"
+                  required
+                  value={settings[field.key] ?? ""}
+                  onChange={(event) => setSettings({ ...settings, [field.key]: event.target.value })}
+                />
+              )}
+            </label>
+          ))}
+        {missing.length > 0 && <p className="text-sm text-down">{t("sources.needs", { names: missing.join(", ") })}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="button-secondary" onClick={onClose}>
+            {t("common.cancel")}
+          </button>
+          <button type="submit" className="button-primary" disabled={add.isPending || missing.length > 0}>
+            {t("sources.connect")}
+          </button>
+        </div>
+      </form>
     </Modal>
   );
 }

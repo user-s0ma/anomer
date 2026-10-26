@@ -33,6 +33,10 @@ export type SettingField = { key: string; type: "city" | "date" | "seed"; label:
 export type SourceDefinition = {
   id: string;
   label: Label;
+  /** 連携の一覧に出す短い説明 */
+  description: Label;
+  /** 一覧に出すアイコンの名前 (画面の SourceIcon が絵に変える) */
+  icon: "orders" | "ads" | "social" | "weather";
   /** 本物のデータか、形だけ本物に合わせたシミュレーターか */
   kind: "live" | "simulated";
   /** 形を合わせた API */

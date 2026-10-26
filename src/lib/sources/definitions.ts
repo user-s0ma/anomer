@@ -21,6 +21,8 @@ const INSTAGRAM_LATENCY_DAYS = 2;
 export const ORDERS: SourceDefinition = {
   id: "orders",
   label: { en: "Orders", ja: "注文" },
+  description: { en: "Daily orders, revenue and customers from checkout", ja: "店の日別の注文・売上・客の数" },
+  icon: "orders",
   kind: "simulated",
   modeledOn: "Shop checkout",
   settings: [{ key: "seed", type: "seed", label: { en: "Seed", ja: "乱数の種" } }],
@@ -45,6 +47,8 @@ export const ORDERS: SourceDefinition = {
 export const META_ADS: SourceDefinition = {
   id: "meta_ads",
   label: { en: "Meta ads", ja: "Meta の広告" },
+  description: { en: "Spend, impressions, clicks and conversions", ja: "広告の費用・表示・クリック・コンバージョン" },
+  icon: "ads",
   kind: "simulated",
   modeledOn: "Meta Marketing API",
   settings: [
@@ -75,6 +79,8 @@ export const META_ADS: SourceDefinition = {
 export const INSTAGRAM: SourceDefinition = {
   id: "instagram",
   label: { en: "Instagram", ja: "Instagram" },
+  description: { en: "Followers, profile visits and post reactions", ja: "フォロワー・プロフィールへの訪問・投稿の反応" },
+  icon: "social",
   kind: "simulated",
   modeledOn: "Instagram Graph API",
   settings: [
@@ -100,6 +106,8 @@ export const INSTAGRAM: SourceDefinition = {
 export const WEATHER: SourceDefinition = {
   id: "weather",
   label: { en: "Weather", ja: "天気" },
+  description: { en: "Daily temperature and precipitation from NOAA stations", ja: "NOAA の観測所の日別の気温と降水量" },
+  icon: "weather",
   kind: "live",
   modeledOn: "NOAA GHCN-Daily",
   settings: [{ key: "cityId", type: "city", label: { en: "City", ja: "都市" } }],
