@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { Link, redirect } from "react-router";
-import { CloudRain, MessageSquareText, Sigma } from "lucide-react";
 import type { Route } from "./+types/_index";
 import { DemoButton, LanguageSwitcher, Logo } from "@/components/ui";
 import { Waterfall } from "@/components/result/Waterfall";
@@ -13,16 +12,25 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return null;
 }
 
-const STEPS = [
-  { n: 1, icon: MessageSquareText },
-  { n: 2, icon: Sigma },
-  { n: 3, icon: CloudRain },
-];
+/**
+ * 見本の内訳。架空のパン屋 (Portland、本物の NOAA の天気) のデータで、10/12〜18 を 10/5〜11 と比べて
+ * 実際に計算した結果 (scripts/try-demo.ts、2026-10-27)。広告は 10/11〜17 に止めてあり、仕込んだ効果は約 -132
+ */
+const SAMPLE = {
+  before: 1090,
+  after: 972,
+  rows: [
+    { key: "ads", value: -128.8, margin: 60.8 },
+    { key: "payday", value: 22.8, margin: 13.1 },
+    { key: "instagram", value: 5.5, margin: 6.3 },
+    { key: "weather", value: -0.6, margin: 9.2 },
+  ],
+  unexplained: -16.9,
+} as const;
 
 export default function Landing() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
-  const ja = locale === "ja";
 
   return (
     <div className="min-h-dvh bg-white font-sans text-black">
@@ -38,55 +46,46 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="ui-container grid items-center gap-14 pt-16 pb-24 lg:grid-cols-[1.05fr_1fr] lg:pt-24">
-          <div>
-            <h1 className="h-display text-4xl font-semibold sm:text-6xl">{t("landing.headline")}</h1>
-            <p className="mt-8 max-w-xl text-base leading-relaxed text-black/50 sm:text-lg">{t("landing.lead")}</p>
-            <div className="mt-10 max-w-sm">
-              <DemoButton />
-              <p className="mt-3 text-xs leading-5 text-black/50">{t("common.tryDemoNote")}</p>
-            </div>
+      <section className="ui-container grid items-center gap-14 pt-16 pb-24 lg:grid-cols-[1fr_1.1fr] lg:pt-24">
+        <div>
+          <h1 className="h-display text-4xl font-semibold sm:text-6xl">{t("landing.headline")}</h1>
+          <p className="mt-8 max-w-xl text-base leading-relaxed text-black/50 sm:text-lg">{t("landing.lead")}</p>
+          <div className="mt-10 max-w-sm">
+            <DemoButton />
+            <p className="mt-3 text-xs leading-5 text-black/50">{t("common.tryDemoNote")}</p>
           </div>
-
-          <figure className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_40px_80px_-32px_rgba(0,0,0,0.35)]">
-            <p className="ml-auto w-fit rounded-3xl bg-black/10 px-4 py-2 text-sm">{t("landing.headline")}</p>
-            <p className="num mt-5 text-2xl font-semibold tracking-tight">
-              <span className="text-black/50">1,053 → </span>911 <span className="text-lg text-down">−142</span>
-            </p>
-            <div className="mt-4">
-              <Waterfall
-                before={1053}
-                after={911}
-                unit="orders"
-                locale={locale}
-                labels={{ before: t("result.from"), after: t("result.to") }}
-                rows={[
-                  { key: "ads", label: ja ? "広告を止めた" : "Ads were paused", value: -132, margin: 40, kind: "cause" },
-                  { key: "rain", label: ja ? "雨の日が多かった" : "More rainy days", value: -21, margin: 6, kind: "cause" },
-                  { key: "payday", label: ja ? "給料日が入った" : "A payday fell in the week", value: 18, margin: 9, kind: "cause" },
-                  { key: "unexplained", label: t("result.unexplained"), value: -7, kind: "unexplained" },
-                ]}
-              />
-            </div>
-            <figcaption className="mt-3 text-[11px] text-black/50">{t("landing.sampleTitle")}</figcaption>
-          </figure>
         </div>
+
+        <figure className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_40px_80px_-32px_rgba(0,0,0,0.35)]">
+          <p className="ml-auto w-fit rounded-3xl bg-black/10 px-4 py-2 text-sm">{t("landing.sample.question")}</p>
+          <p className="num mt-5 text-2xl font-semibold tracking-tight">
+            <span className="text-black/50">1,090 → </span>972 <span className="text-lg text-down">−118</span>
+          </p>
+          <div className="mt-4">
+            <Waterfall
+              before={SAMPLE.before}
+              after={SAMPLE.after}
+              unit="orders"
+              locale={locale}
+              labels={{ before: t("landing.sample.before"), after: t("landing.sample.after") }}
+              rows={[
+                ...SAMPLE.rows.map((r) => ({ ...r, label: t(`landing.sample.${r.key}`), kind: "cause" as const })),
+                { key: "unexplained", label: t("result.unexplained"), value: SAMPLE.unexplained, kind: "unexplained" as const },
+              ]}
+            />
+          </div>
+          <figcaption className="mt-4 border-t border-black/10 pt-3 text-xs leading-5 text-black/50">{t("landing.sample.caption")}</figcaption>
+        </figure>
       </section>
 
       <section className="border-t border-black/10">
-        <div className="ui-container py-24">
-          <h2 className="h-display text-3xl font-semibold sm:text-5xl">{t("landing.stepsTitle")}</h2>
-          <ol className="mt-14 grid gap-10 md:grid-cols-3">
-            {STEPS.map(({ n, icon: Icon }) => (
-              <li key={n} className="border-t border-black/10 pt-6">
-                <Icon className="size-5" />
-                <h3 className="mt-5 text-lg font-semibold">{t(`landing.step${n}Title`)}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-black/50">{t(`landing.step${n}Body`)}</p>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-14 text-sm text-black/50">{t("landing.simulatedNote")}</p>
+        <div className="ui-container grid gap-10 py-20 md:grid-cols-3">
+          {[1, 2, 3].map((n) => (
+            <div key={n}>
+              <h2 className="text-lg font-semibold">{t(`landing.step${n}Title`)}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-black/50">{t(`landing.step${n}Body`)}</p>
+            </div>
+          ))}
         </div>
       </section>
 

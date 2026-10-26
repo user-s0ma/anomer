@@ -34,6 +34,7 @@ const result = investigate({
   baseline: { start: bs, end: be },
 });
 console.log(`data until ${end}, ${(performance.now() - t0).toFixed(0)} ms`, {
+  base: result.baselineValue, now: result.changeValue, period: [cs, ce, bs, be],
   change: result.change.toFixed(1),
   unexplained: result.unexplained.toFixed(1),
   r2: result.fit.rSquared.toFixed(3),
