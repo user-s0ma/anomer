@@ -9,8 +9,8 @@ const ja: Dictionary = {
   common: {
     signIn: "ログイン",
     signOut: "ログアウト",
-    tryDemo: "お試しで使う",
-    tryDemoNote: "登録は要りません。共有のお試し用の店を使います。",
+    tryDemo: "審査員の方はこちら（デモアカウント）",
+    tryDemoNote: "1年分のデータがある共有のデモの店です。登録は要りません。",
     loading: "読み込み中…",
     error: "うまくいきませんでした。もう一度お試しください。",
     language: "言語",
@@ -44,6 +44,9 @@ const ja: Dictionary = {
     failed: "ログインできませんでした。メールアドレスとパスワードを確かめてください。",
     createFailed: "アカウントを作れませんでした。",
     captcha: "下の確認を済ませてください。",
+    demoTitle: "ハッカソンの審査員の方へ",
+    demoBody: "パン屋の1年分の広告・Instagram・注文と本物の天気が入った、共有のデモアカウントです。登録は要りません。ここでした質問は、デモを使うほかの人にも見えます。",
+    ownAccount: "自分のアカウントで使う",
   },
   app: {
     demoBadge: "お試し",

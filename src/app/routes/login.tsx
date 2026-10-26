@@ -22,6 +22,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const siteKey = import.meta.env.VITE_PUBLIC_TURNSTILE_SITE_KEY;
+  const [ownAccountOpen, setOwnAccountOpen] = useState(false);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,48 +53,55 @@ export default function Login() {
       <Link to="/" className="mb-8 self-start">
         <Logo className="text-lg" />
       </Link>
-      <h1 className="text-2xl font-bold">{mode === "signIn" ? t("login.title") : t("login.createTitle")}</h1>
-      <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
-        {mode === "signUp" && (
-          <label className="flex flex-col gap-1.5 text-sm font-medium">
-            {t("login.name")}
-            <input name="name" required maxLength={80} autoComplete="name" className={inputClass} />
-          </label>
-        )}
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          {t("login.email")}
-          <input name="email" type="email" required autoComplete="email" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          {t("login.password")}
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete={mode === "signIn" ? "current-password" : "new-password"}
-            className={inputClass}
-          />
-        </label>
-        {siteKey && <Turnstile siteKey={siteKey} onSuccess={setToken} onExpire={() => setToken(null)} options={{ size: "flexible" }} />}
-        {error && <p className="text-sm text-danger">{error}</p>}
-        <button type="submit" className={buttonPrimary} disabled={busy}>
-          {busy ? t("common.loading") : mode === "signIn" ? t("login.submit") : t("login.create")}
-        </button>
-      </form>
-      <button
-        type="button"
-        onClick={() => {
-          setMode(mode === "signIn" ? "signUp" : "signIn");
-          setError(null);
-        }}
-        className="mt-4 self-start text-sm font-medium text-accent hover:underline"
-      >
-        {mode === "signIn" ? t("login.toCreate") : t("login.toSignIn")}
-      </button>
-      <div className="mt-10 border-t border-line pt-6">
+      <section className="rounded-xl border border-line bg-surface p-5">
+        <h1 className="text-lg font-semibold">{t("login.demoTitle")}</h1>
+        <p className="mt-1 mb-4 text-sm leading-relaxed text-ink-soft">{t("login.demoBody")}</p>
         <DemoButton />
-      </div>
+      </section>
+      <details className="mt-6" open={ownAccountOpen} onToggle={(e) => setOwnAccountOpen(e.currentTarget.open)}>
+        <summary className="cursor-pointer text-sm text-ink-mute hover:text-ink">{t("login.ownAccount")}</summary>
+        <div className="mt-4">
+          <h2 className="text-xl font-bold">{mode === "signIn" ? t("login.title") : t("login.createTitle")}</h2>
+          <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+            {mode === "signUp" && (
+              <label className="flex flex-col gap-1.5 text-sm font-medium">
+                {t("login.name")}
+                <input name="name" required maxLength={80} autoComplete="name" className={inputClass} />
+              </label>
+            )}
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              {t("login.email")}
+              <input name="email" type="email" required autoComplete="email" className={inputClass} />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              {t("login.password")}
+              <input
+                name="password"
+                type="password"
+                required
+                minLength={8}
+                autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+                className={inputClass}
+              />
+            </label>
+            {siteKey && <Turnstile siteKey={siteKey} onSuccess={setToken} onExpire={() => setToken(null)} options={{ size: "flexible" }} />}
+            {error && <p className="text-sm text-danger">{error}</p>}
+            <button type="submit" className={buttonPrimary} disabled={busy}>
+              {busy ? t("common.loading") : mode === "signIn" ? t("login.submit") : t("login.create")}
+            </button>
+          </form>
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "signIn" ? "signUp" : "signIn");
+              setError(null);
+            }}
+            className="mt-4 self-start text-sm font-medium text-accent hover:underline"
+          >
+            {mode === "signIn" ? t("login.toCreate") : t("login.toSignIn")}
+          </button>
+        </div>
+      </details>
     </div>
   );
 }

@@ -49,7 +49,7 @@ export function LanguageSwitcher() {
   );
 }
 
-/** お試しで入るボタン。Turnstile を通ってから共有アカウントに入る */
+/** 審査員向けのデモアカウントに入るボタン。Turnstile を通ってから共有アカウントに入る (手元でサイトキーが無いときは Turnstile なし) */
 export function DemoButton({ className = "" }: { className?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ export function DemoButton({ className = "" }: { className?: string }) {
   const siteKey = import.meta.env.VITE_PUBLIC_TURNSTILE_SITE_KEY;
 
   const start = async () => {
-    if (!token) return;
+    if (siteKey && !token) return;
     setBusy(true);
     try {
       await signInDemo(token);
@@ -71,7 +71,7 @@ export function DemoButton({ className = "" }: { className?: string }) {
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <button type="button" className={buttonPrimary} onClick={start} disabled={!token || busy}>
+      <button type="button" className={buttonPrimary} onClick={start} disabled={(!!siteKey && !token) || busy}>
         {busy ? t("common.loading") : t("common.tryDemo")}
       </button>
       {siteKey && <Turnstile siteKey={siteKey} onSuccess={setToken} onExpire={() => setToken(null)} options={{ size: "flexible" }} />}

@@ -28,12 +28,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-/** お試しの共有アカウントに入る (Turnstile の答えを付ける) */
-export async function signInDemo(captchaToken: string) {
+/** 審査員向けのデモアカウントに入る (Turnstile の答えを付ける。手元で Turnstile が無いときは付けない) */
+export async function signInDemo(captchaToken: string | null) {
   return request<{ ok: true }>("/api/auth/sign-in/demo", {
     method: "POST",
     body: "{}",
-    headers: { "x-captcha-response": captchaToken },
+    headers: captchaToken ? { "x-captcha-response": captchaToken } : {},
   });
 }
 

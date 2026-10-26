@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, redirect } from "react-router";
 import type { Route } from "./+types/_index";
-import { DemoButton, LanguageSwitcher, Logo, buttonSecondary } from "@/components/ui";
+import { DemoButton, LanguageSwitcher, Logo } from "@/components/ui";
 import { Waterfall } from "@/components/result/Waterfall";
 import { getSession } from "@/lib/auth/server";
 import { appContext } from "@/lib/util/app-context";
@@ -34,11 +34,8 @@ export default function Landing() {
           <div>
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">{t("landing.headline")}</h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-soft">{t("landing.lead")}</p>
-            <div className="mt-8 flex max-w-sm flex-col gap-3">
+            <div className="mt-8 max-w-sm">
               <DemoButton />
-              <Link to="/login" className={buttonSecondary}>
-                {t("common.signIn")}
-              </Link>
             </div>
           </div>
 

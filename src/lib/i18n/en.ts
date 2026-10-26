@@ -7,8 +7,8 @@ const en = {
   common: {
     signIn: "Sign in",
     signOut: "Sign out",
-    tryDemo: "Try the demo",
-    tryDemoNote: "No sign-up. You'll use a shared demo shop.",
+    tryDemo: "Hackathon judges: open the demo account",
+    tryDemoNote: "A shared demo shop with a year of data. No sign-up.",
     loading: "Loading…",
     error: "Something went wrong. Please try again.",
     language: "Language",
@@ -42,6 +42,9 @@ const en = {
     failed: "Could not sign in. Check your email and password.",
     createFailed: "Could not create the account.",
     captcha: "Please complete the check below.",
+    demoTitle: "For hackathon judges",
+    demoBody: "A shared demo account with a bakery's year of ads, Instagram, orders and real weather. No sign-up. Questions you ask are visible to others using the demo.",
+    ownAccount: "Or use your own account",
   },
   app: {
     demoBadge: "Demo",
