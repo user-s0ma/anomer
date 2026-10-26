@@ -4,7 +4,6 @@
  */
 interface AppEnv {
   VITE_PUBLIC_APP_URL: string;
-  VITE_PUBLIC_TURNSTILE_SITE_KEY: string;
   /** 店・データ・調査・ログインの記録 (Cloudflare D1) */
   DB: D1Database;
   /** Meta Model API の入口と、使うモデル */

@@ -8,9 +8,8 @@
   "workers_dev": true,
   "preview_urls": false,
   "vars": {
-    "VITE_PUBLIC_APP_URL": "https://anomer.example.workers.dev",
-    // Cloudflare Turnstile のサイトキー (下は常に通るテスト用の値。公開前に本物に替える)
-    "VITE_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    // サーバーが自分の URL を知るのに使う (画面に埋め込む値は .env.production)
+    "VITE_PUBLIC_APP_URL": "https://anomer.magnificentrue.workers.dev",
     "META_MODEL_API_BASE": "https://api.meta.ai/v1",
     "META_MODEL": "muse-spark-1.3",
     // AI を使う調査の1日の上限 (全体、お試しのブラウザごと、登録した人ごと)
