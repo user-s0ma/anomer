@@ -48,7 +48,7 @@ const en = {
   },
   app: {
     demoBadge: "Demo",
-    demoNote: "This is a shared demo shop. Questions you ask are visible to everyone using the demo.",
+    demoNote: "A shared demo shop for hackathon judges. Questions you ask are visible to everyone using the demo.",
     nav: { ask: "Ask", data: "Data" },
     askPlaceholder: "e.g. Why did orders drop last week?",
     ask: "Ask",
@@ -64,6 +64,9 @@ const en = {
     },
     failed: "This question could not be answered.",
     pickOne: "Ask a question, or pick one from the list.",
+    emptyTitle: "What changed in your numbers?",
+    openMenu: "Open the sidebar",
+    closeMenu: "Close the sidebar",
   },
   result: {
     comparing: "{{target}}, {{change}} compared with {{baseline}}",
@@ -71,6 +74,8 @@ const en = {
     to: "After",
     change: "Change",
     breakdown: "What moved it",
+    causes: "Causes",
+    rangeNote: "Whiskers show the 95% range",
     unexplained: "Not explained",
     unexplainedNote: "What the model could not attribute to any cause.",
     range: "95% range ±{{margin}}",

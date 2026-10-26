@@ -5,6 +5,7 @@ export default [
   route("login", "routes/login.tsx"),
   route("app", "routes/app/_layout.tsx", [
     index("routes/app/_index.tsx"),
+    route("q/:id", "routes/app/q.$id.tsx"),
     route("data", "routes/app/data.tsx"),
     route("setup", "routes/app/setup.tsx"),
   ]),

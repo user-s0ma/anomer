@@ -1,70 +1,84 @@
 @import "tailwindcss";
 
 /*
- * Anomer の色 (役割ごと)
- * canvas=ページの地 / surface=カード / sunken=面の中の一段沈んだ塗り / line=区切り線
- * ink=本文 / ink-soft=補足 / ink-mute=控えめな文字
- * accent=操作 (ボタン・リンク・選択) / up=数字を押し上げた原因 / down=押し下げた原因 / unknown=説明できない分
+ * Anomer の見た目。白と黒の2色だけで組み、暗いテーマでは白と黒を入れ替える
+ * (画面のどこでも white / black と、その濃さ (black/50 など) だけを使えば両方のテーマに合う)。
+ * 色を使うのは意味があるところだけ: up = 数字を押し上げた原因、down = 押し下げた原因
  */
 @theme {
   --font-sans: "Inter Variable", "Noto Sans JP Variable", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --color-up: #16a34a;
+  --color-down: #dc2626;
+}
 
-  --color-canvas: #f6f5f1;
-  --color-surface: #ffffff;
-  --color-sunken: #efede7;
-  --color-line: #e2dfd6;
-  --color-line-strong: #8d887b;
-  --color-ink: #1c1b18;
-  --color-ink-soft: #4a4740;
-  --color-ink-mute: #6b675d;
-
-  --color-accent: #3b3fd8;
-  --color-accent-hover: #2f32b8;
-  --color-accent-tint: #e9e9fb;
-  --color-on-accent: #ffffff;
-
-  --color-up: #0f7a5c;
-  --color-up-tint: #dcefe8;
-  --color-down: #c2410c;
-  --color-down-tint: #f9e3d8;
-  --color-unknown: #8d887b;
-
-  --color-danger: #b42318;
-  --color-danger-tint: #fbe4e2;
+:root {
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-canvas: #141413;
-    --color-surface: #1d1c1a;
-    --color-sunken: #252421;
-    --color-line: #34322e;
-    --color-line-strong: #7d786c;
-    --color-ink: #efede7;
-    --color-ink-soft: #c9c5bb;
-    --color-ink-mute: #a29d91;
-
-    --color-accent: #9a9cff;
-    --color-accent-hover: #b5b6ff;
-    --color-accent-tint: #26274a;
-    --color-on-accent: #121330;
-
-    --color-up: #4cc79f;
-    --color-up-tint: #173a2f;
-    --color-down: #ff8f5c;
-    --color-down-tint: #45251a;
-    --color-unknown: #8d887b;
-
-    --color-danger: #ff8a80;
-    --color-danger-tint: #47201d;
+    color-scheme: dark;
+    --color-white: #101013;
+    --color-black: #eeedea;
+    --color-up: #4ade80;
+    --color-down: #f87171;
   }
 }
 
 html {
-  background: var(--color-canvas);
-  color: var(--color-ink);
+  background: var(--color-white);
+  color: var(--color-black);
   -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .ui-container {
+    @apply mx-auto w-full max-w-6xl px-4;
+  }
+
+  /* 見出しの大きな字は字間を詰める */
+  .h-display {
+    letter-spacing: -0.06em;
+    line-height: 1.04;
+  }
+
+  .button-primary,
+  .button-secondary {
+    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold shadow transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .button-primary {
+    @apply bg-black text-white hover:bg-black/70;
+  }
+  .button-secondary {
+    @apply border border-black/20 bg-white text-black hover:bg-black/10;
+  }
+
+  .button-large {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .input {
+    @apply h-10 w-full rounded-xl border border-black/20 bg-white px-3 text-base text-black shadow outline-none placeholder:text-black/50 focus:border-black focus:ring-2 focus:ring-black/10;
+  }
+
+  .panel {
+    @apply rounded-xl border border-black/20 bg-white;
+  }
+  .panel-header {
+    @apply flex items-baseline justify-between gap-3 border-b border-black/20 px-5 py-3;
+  }
+  .panel-title {
+    @apply text-sm font-semibold text-black;
+  }
+
+  .nav-item {
+    @apply flex h-10 w-full items-center gap-2 rounded-xl px-2 text-sm text-black transition-colors hover:bg-black/10;
+  }
+
+  .chip {
+    @apply rounded-full border border-black/20 px-3 py-1.5 text-xs text-black transition-colors hover:bg-black/10 disabled:opacity-50;
+  }
 }
 
 .num {
@@ -72,6 +86,17 @@ html {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-black);
   outline-offset: 2px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

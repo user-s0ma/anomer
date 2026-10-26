@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { buttonPrimary, inputClass } from "@/components/ui";
+import { PageBody } from "@/components/PageBody";
 import { createShop } from "@/lib/api-client";
 import { useMe } from "./_layout";
 
@@ -34,31 +34,34 @@ export default function Setup() {
   };
 
   return (
-    <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-bold">{t("setup.title")}</h1>
-      <p className="mt-2 text-sm leading-relaxed text-ink-soft">{t("setup.lead")}</p>
-      <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          {t("setup.name")}
-          <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          {t("setup.city")}
-          <select value={cityId} onChange={(e) => setCityId(e.target.value)} required className={inputClass}>
-            <option value="" disabled>
-              {t("setup.cityPlaceholder")}
-            </option>
-            {me.data?.cities.map((city) => (
-              <option key={city.id} value={city.id}>
-                {city.label}
+    <PageBody title={t("setup.title")}>
+      <section className="panel max-w-xl">
+        <p className="border-b border-black/20 px-5 py-3 text-sm leading-6 text-black/50">{t("setup.lead")}</p>
+        <form onSubmit={submit} className="space-y-4 p-5">
+          <label className="block">
+            <span className="mb-1 block text-xs">{t("setup.name")}</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} className="input" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs">{t("setup.city")}</span>
+            <select value={cityId} onChange={(e) => setCityId(e.target.value)} required className="input">
+              <option value="" disabled>
+                {t("setup.cityPlaceholder")}
               </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className={buttonPrimary} disabled={busy || !cityId || !name.trim()}>
-          {busy ? t("setup.creating") : t("setup.submit")}
-        </button>
-      </form>
-    </div>
+              {me.data?.cities.map((city) => (
+                <option key={city.id} value={city.id}>
+                  {city.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex justify-end">
+            <button type="submit" className="button-primary" disabled={busy || !cityId || !name.trim()}>
+              {busy ? t("setup.creating") : t("setup.submit")}
+            </button>
+          </div>
+        </form>
+      </section>
+    </PageBody>
   );
 }

@@ -10,143 +10,154 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
   const locale = i18n.language as Locale;
   const { plan, result, explanation } = investigation;
 
+  const question = (
+    <p className="ml-auto w-fit max-w-[85%] rounded-3xl bg-black/10 px-4 py-2.5 text-sm leading-6">{investigation.question}</p>
+  );
+
   if (investigation.status === "failed" || !plan || !result || !explanation) {
     return (
-      <section className="rounded-xl border border-line bg-surface p-5">
-        <h2 className="text-lg font-semibold">{investigation.question}</h2>
-        <p className="mt-3 text-sm text-danger">{investigation.error ?? t("app.failed")}</p>
-      </section>
+      <div className="mx-auto flex max-w-3xl flex-col gap-4">
+        {question}
+        <p className="text-sm text-black/50">{investigation.error ?? t("app.failed")}</p>
+      </div>
     );
   }
 
   const target = METRIC_BY_KEY.get(plan.target)!;
   const unit = target.unit;
   const fmt = (v: number, signed = false) => formatValue(v, unit, locale, { signed });
-  const titleOf = new Map(explanation.groups.map((g) => [g.key, g]));
+  const textOf = new Map(explanation.groups.map((g) => [g.key, g]));
 
   return (
-    <article className="flex flex-col gap-5">
-      <header className="rounded-xl border border-line bg-surface p-5">
-        <h2 className="text-lg font-semibold leading-snug">{investigation.question}</h2>
-        <p className="mt-1 text-sm text-ink-soft">
+    <article className="mx-auto flex max-w-3xl flex-col gap-4">
+      {question}
+
+      <div className="py-2">
+        <p className="text-sm text-black/50">
           {t("result.comparing", {
             target: metricLabel(plan.target, locale),
             change: formatPeriod(plan.change, locale),
             baseline: formatPeriod(plan.baseline, locale),
           })}
         </p>
-        <dl className="mt-4 grid grid-cols-3 gap-3">
-          {[
-            [t("result.from"), fmt(result.baselineValue)],
-            [t("result.to"), fmt(result.changeValue)],
-            [t("result.change"), fmt(result.change, true)],
-          ].map(([label, value], i) => (
-            <div key={label} className="rounded-lg bg-sunken px-3 py-2">
-              <dt className="text-xs text-ink-mute">{label}</dt>
-              <dd className={`num mt-0.5 text-xl font-semibold ${i === 2 ? (result.change >= 0 ? "text-up" : "text-down") : ""}`}>{value}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-4 text-[15px] leading-relaxed">{explanation.summary}</p>
-      </header>
+        <p className="num mt-1 flex flex-wrap items-baseline gap-x-3 text-3xl font-semibold tracking-tight">
+          <span className="text-black/50">{fmt(result.baselineValue)}</span>
+          <span className="text-black/50">→</span>
+          <span>{fmt(result.changeValue)}</span>
+          <span className={`text-xl ${result.change >= 0 ? "text-up" : "text-down"}`}>{fmt(result.change, true)}</span>
+        </p>
+        <p className="mt-4 text-base leading-7">{explanation.summary}</p>
+      </div>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-mute">{t("result.breakdown")}</h3>
-        <Waterfall
-          before={result.baselineValue}
-          after={result.changeValue}
-          unit={unit}
-          locale={locale}
-          labels={{ before: `${t("result.from")} · ${formatPeriod(plan.baseline, locale)}`, after: `${t("result.to")} · ${formatPeriod(plan.change, locale)}` }}
-          rows={[
-            ...result.groups.map((g) => ({
-              key: g.key,
-              label: titleOf.get(g.key)?.title ?? groupLabel(g.key, locale, t),
-              value: g.contribution,
-              margin: g.margin,
-              kind: "cause" as const,
-            })),
-            { key: "unexplained", label: t("result.unexplained"), value: result.unexplained, kind: "unexplained" as const },
-          ]}
-        />
+      <section className="panel">
+        <div className="panel-header">
+          <h2 className="panel-title">{t("result.breakdown")}</h2>
+          <span className="text-xs text-black/50">{t("result.rangeNote")}</span>
+        </div>
+        <div className="px-5 py-3">
+          <Waterfall
+            before={result.baselineValue}
+            after={result.changeValue}
+            unit={unit}
+            locale={locale}
+            labels={{ before: formatPeriod(plan.baseline, locale), after: formatPeriod(plan.change, locale) }}
+            rows={[
+              ...result.groups.map((g) => ({
+                key: g.key,
+                label: textOf.get(g.key)?.title ?? groupLabel(g.key, locale, t),
+                value: g.contribution,
+                margin: g.margin,
+                kind: "cause" as const,
+              })),
+              { key: "unexplained", label: t("result.unexplained"), value: result.unexplained, kind: "unexplained" as const },
+            ]}
+          />
+        </div>
       </section>
 
-      <section className="flex flex-col gap-3">
-        {result.groups.map((group) => {
-          const text = titleOf.get(group.key);
-          const noisy = Math.abs(group.contribution) <= group.margin;
-          return (
-            <div key={group.key} className="rounded-xl border border-line bg-surface p-5">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-ink-mute">{groupLabel(group.key, locale, t)}</p>
-                  <h4 className="text-base font-semibold">{text?.title}</h4>
+      <section className="panel">
+        <div className="panel-header">
+          <h2 className="panel-title">{t("result.causes")}</h2>
+        </div>
+        <ul className="divide-y divide-black/20">
+          {result.groups.map((group) => {
+            const text = textOf.get(group.key);
+            const noisy = Math.abs(group.contribution) <= group.margin;
+            return (
+              <li key={group.key} className="px-5 py-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-black/50">{groupLabel(group.key, locale, t)}</p>
+                    <h3 className="font-semibold">{text?.title}</h3>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className={`num font-semibold ${group.contribution >= 0 ? "text-up" : "text-down"}`}>{fmt(group.contribution, true)}</p>
+                    <p className="num text-xs text-black/50">
+                      ±{fmt(group.margin)}
+                      {noisy && ` · ${t("result.mayBeNoise")}`}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className={`num text-lg font-semibold ${group.contribution >= 0 ? "text-up" : "text-down"}`}>{fmt(group.contribution, true)}</p>
-                  <p className="num text-xs text-ink-mute">
-                    {t("result.range", { margin: fmt(group.margin) })}
-                    {noisy && ` · ${t("result.mayBeNoise")}`}
-                  </p>
-                </div>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{text?.explanation}</p>
-              <details className="mt-3 text-sm">
-                <summary className="cursor-pointer text-ink-mute hover:text-ink">{t("result.details")}</summary>
-                <ul className="mt-2 divide-y divide-line">
-                  {group.columns.map((c, i) => (
-                    <li key={i} className="flex justify-between gap-3 py-1.5">
-                      <span className="text-ink-soft">{columnLabel(c.column, locale, t)}</span>
-                      <span className="num">{fmt(c.contribution, true)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            </div>
-          );
-        })}
+                <p className="mt-1.5 text-sm leading-6 text-black/70">{text?.explanation}</p>
+                <details className="mt-2 text-sm">
+                  <summary className="cursor-pointer text-xs text-black/50 hover:text-black">{t("result.details")}</summary>
+                  <ul className="mt-2 space-y-1">
+                    {group.columns.map((c, i) => (
+                      <li key={i} className="flex justify-between gap-3 text-xs">
+                        <span className="text-black/70">{columnLabel(c.column, locale, t)}</span>
+                        <span className="num">{fmt(c.contribution, true)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-mute">{t("result.chartTitle", { target: metricLabel(plan.target, locale) })}</h3>
-        <SeriesChart
-          series={result.series}
-          change={plan.change}
-          baseline={plan.baseline}
-          unit={unit}
-          locale={locale}
-          labels={{ actual: t("result.actual"), fitted: t("result.fitted"), change: t("result.changePeriod"), baseline: t("result.baselinePeriod") }}
-        />
+      <section className="panel">
+        <div className="panel-header">
+          <h2 className="panel-title">{t("result.chartTitle", { target: metricLabel(plan.target, locale) })}</h2>
+        </div>
+        <div className="px-5 py-4">
+          <SeriesChart
+            series={result.series}
+            change={plan.change}
+            baseline={plan.baseline}
+            unit={unit}
+            locale={locale}
+            labels={{ actual: t("result.actual"), fitted: t("result.fitted"), change: t("result.changePeriod"), baseline: t("result.baselinePeriod") }}
+          />
+        </div>
       </section>
 
-      {(plan.excluded.length > 0 || result.unavailable.length > 0) && (
-        <section className="grid gap-3 sm:grid-cols-2">
-          {plan.excluded.length > 0 && (
-            <div className="rounded-xl border border-line bg-surface p-5">
-              <h3 className="text-sm font-semibold">{t("result.excludedTitle")}</h3>
-              <p className="mt-1 text-xs text-ink-mute">{t("result.excludedNote", { target: metricLabel(plan.target, locale) })}</p>
-              <ul className="mt-3 flex flex-col gap-2 text-sm">
-                {plan.excluded.map((e) => (
-                  <li key={e.metric}>
-                    <span className="font-medium">{metricLabel(e.metric, locale)}</span>
-                    <span className="text-ink-soft"> — {e.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {result.unavailable.length > 0 && (
-            <div className="rounded-xl border border-line bg-surface p-5">
-              <h3 className="text-sm font-semibold">{t("result.unavailableTitle")}</h3>
-              <p className="mt-2 text-sm text-ink-soft">{result.unavailable.map((k) => metricLabel(k, locale)).join(", ")}</p>
-            </div>
-          )}
+      {plan.excluded.length > 0 && (
+        <section className="panel">
+          <div className="panel-header">
+            <h2 className="panel-title">{t("result.excludedTitle")}</h2>
+          </div>
+          <p className="px-5 pt-3 text-xs text-black/50">{t("result.excludedNote", { target: metricLabel(plan.target, locale) })}</p>
+          <ul className="space-y-1.5 px-5 py-3 text-sm">
+            {plan.excluded.map((e) => (
+              <li key={e.metric}>
+                <span className="font-medium">{metricLabel(e.metric, locale)}</span>
+                <span className="text-black/50"> — {e.reason}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
-      <details className="rounded-xl border border-line bg-surface p-5 text-sm">
-        <summary className="cursor-pointer font-semibold">{t("result.method")}</summary>
-        <p className="mt-2 leading-relaxed text-ink-soft">
+      {result.unavailable.length > 0 && (
+        <p className="text-xs text-black/50">
+          {t("result.unavailableTitle")}: {result.unavailable.map((k) => metricLabel(k, locale)).join(", ")}
+        </p>
+      )}
+
+      <details className="text-sm text-black/50">
+        <summary className="cursor-pointer hover:text-black">{t("result.method")}</summary>
+        <p className="mt-2 leading-6">
           {t("result.methodBody", {
             rows: result.fit.rows,
             first: result.fit.firstDate,

@@ -1,147 +1,99 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
-import { Check, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { InvestigationDetail } from "@/components/result/InvestigationDetail";
-import { buttonPrimary, inputClass } from "@/components/ui";
-import { ApiError, ask, listInvestigations, type InvestigationStep } from "@/lib/api-client";
-import { useMe } from "./_layout";
+import { useOutletContext } from "react-router";
+import { ArrowUp, Check, LoaderCircle } from "lucide-react";
+import { PageBody } from "@/components/PageBody";
+import type { InvestigationStep } from "@/lib/api-client";
+import { useMe, type AppLayoutContext } from "./_layout";
 
 const STEPS: InvestigationStep[] = ["data", "reading", "fitting", "explaining"];
 
-export default function Ask() {
-  const { t, i18n } = useTranslation();
-  const me = useMe();
-  const queryClient = useQueryClient();
-  const [params, setParams] = useSearchParams();
-  const [question, setQuestion] = useState("");
-  const [running, setRunning] = useState<{ question: string; step: InvestigationStep } | null>(null);
-  const list = useQuery({ queryKey: ["investigations"], queryFn: listInvestigations });
-
-  const items = list.data?.items ?? [];
-  const selectedId = params.get("q") ?? items[0]?.id;
-  const selected = items.find((i) => i.id === selectedId);
-
-  const submit = async (text: string) => {
-    const q = text.trim();
-    if (q.length < 3 || running) return;
-    setRunning({ question: q, step: "data" });
-    try {
-      const view = await ask(q, (step) => setRunning({ question: q, step }));
-      setQuestion("");
-      await queryClient.invalidateQueries({ queryKey: ["investigations"] });
-      setParams({ q: view.id });
-    } catch (error) {
-      toast.error(error instanceof ApiError && error.status === 429 ? t("app.limit") : t("common.error"));
-    } finally {
-      setRunning(null);
-    }
+/** 質問を書く欄。丸い枠の中に、送るボタンを置く */
+function Composer({ disabled, onSubmit }: { disabled: boolean; onSubmit: (text: string) => void }) {
+  const { t } = useTranslation();
+  const [text, setText] = useState("");
+  const send = () => {
+    if (disabled || text.trim().length < 3) return;
+    onSubmit(text);
+    setText("");
   };
+  return (
+    <form
+      className="flex w-full items-end gap-1 rounded-[26px] border border-black/20 bg-white p-1.5 shadow focus-within:border-black/50"
+      onSubmit={(e) => {
+        e.preventDefault();
+        send();
+      }}
+    >
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            send();
+          }
+        }}
+        rows={1}
+        maxLength={500}
+        placeholder={t("app.askPlaceholder")}
+        className="field-sizing-content max-h-48 min-h-9 flex-1 resize-none self-center bg-transparent px-3 py-2 text-base leading-6 outline-none placeholder:text-black/50"
+      />
+      <button
+        type="submit"
+        disabled={disabled || text.trim().length < 3}
+        aria-label={t("app.ask")}
+        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-black text-white transition-opacity hover:opacity-70 disabled:bg-black/10 disabled:text-black/50"
+      >
+        {disabled ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
+      </button>
+    </form>
+  );
+}
 
-  const dateFormat = new Intl.DateTimeFormat(i18n.language, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+export default function Ask() {
+  const { t } = useTranslation();
+  const me = useMe();
+  const { running, submitQuestion } = useOutletContext<AppLayoutContext>();
+
+  if (running) {
+    const current = STEPS.indexOf(running.step);
+    return (
+      <PageBody>
+        <div className="mx-auto flex max-w-3xl flex-col gap-6 pt-16">
+          <p className="ml-auto w-fit max-w-[85%] rounded-3xl bg-black/10 px-4 py-2.5 text-sm leading-6">{running.question}</p>
+          <ol className="flex flex-col gap-2.5">
+            {STEPS.map((step, i) => (
+              <li
+                key={step}
+                className={`flex items-center gap-2.5 text-sm ${i < current ? "text-black/50" : i === current ? "font-medium" : "text-black/30"}`}
+              >
+                {i < current ? <Check className="size-4" /> : i === current ? <LoaderCircle className="size-4 animate-spin" /> : <span className="size-4" />}
+                {t(`app.steps.${step}`)}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </PageBody>
+    );
+  }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-      <aside className="flex flex-col gap-5">
-        {me.data?.user.demo && <p className="rounded-lg border border-line bg-surface p-3 text-xs leading-relaxed text-ink-soft">{t("app.demoNote")}</p>}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit(question);
-          }}
-          className="flex flex-col gap-2"
-        >
-          <textarea
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                void submit(question);
-              }
-            }}
-            rows={3}
-            maxLength={500}
-            placeholder={t("app.askPlaceholder")}
-            className={`${inputClass} resize-none`}
-          />
-          <button type="submit" className={buttonPrimary} disabled={!!running || question.trim().length < 3}>
-            {t("app.ask")}
-          </button>
-        </form>
-
+    <PageBody>
+      <div className="mx-auto flex min-h-[80dvh] max-w-3xl flex-col items-center justify-center gap-6">
+        <h1 className="h-display text-center text-3xl font-semibold sm:text-4xl">{t("app.emptyTitle")}</h1>
+        <Composer disabled={false} onSubmit={submitQuestion} />
         {(me.data?.suggestions.length ?? 0) > 0 && (
-          <div>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-mute">{t("app.suggestions")}</h2>
-            <ul className="flex flex-col gap-1.5">
-              {me.data!.suggestions.map((s) => (
-                <li key={s}>
-                  <button
-                    type="button"
-                    disabled={!!running}
-                    onClick={() => void submit(s)}
-                    className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-left text-sm hover:border-accent disabled:opacity-50"
-                  >
-                    {s}
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <div className="flex flex-wrap justify-center gap-2">
+            {me.data!.suggestions.map((s) => (
+              <button key={s} type="button" className="chip" onClick={() => submitQuestion(s)}>
+                {s}
+              </button>
+            ))}
           </div>
         )}
-
-        <div>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-mute">{t("app.history")}</h2>
-          {items.length === 0 ? (
-            <p className="text-sm text-ink-mute">{list.isPending ? t("common.loading") : t("app.noHistory")}</p>
-          ) : (
-            <ul className="flex flex-col">
-              {items.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => setParams({ q: item.id })}
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm ${item.id === selectedId ? "bg-sunken" : "hover:bg-sunken/60"}`}
-                  >
-                    <span className="line-clamp-2">{item.question}</span>
-                    <span className="mt-0.5 block text-xs text-ink-mute">
-                      {dateFormat.format(new Date(item.createdAt))}
-                      {item.status === "failed" && ` · ${t("app.failed")}`}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </aside>
-
-      <section className="min-w-0">
-        {running ? (
-          <div className="rounded-xl border border-line bg-surface p-5">
-            <h2 className="text-lg font-semibold">{running.question}</h2>
-            <ol className="mt-4 flex flex-col gap-2.5">
-              {STEPS.map((step, i) => {
-                const current = STEPS.indexOf(running.step);
-                const done = i < current;
-                const active = i === current;
-                return (
-                  <li key={step} className={`flex items-center gap-2.5 text-sm ${done ? "text-ink-soft" : active ? "font-medium text-ink" : "text-ink-mute"}`}>
-                    {done ? <Check className="size-4 text-up" /> : active ? <Loader2 className="size-4 animate-spin text-accent" /> : <span className="size-4" />}
-                    {t(`app.steps.${step}`)}
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        ) : selected ? (
-          <InvestigationDetail investigation={selected} />
-        ) : (
-          <p className="rounded-xl border border-dashed border-line-strong p-8 text-center text-sm text-ink-mute">{t("app.pickOne")}</p>
-        )}
-      </section>
-    </div>
+        {me.data?.user.demo && <p className="max-w-lg text-center text-xs leading-5 text-black/50">{t("app.demoNote")}</p>}
+      </div>
+    </PageBody>
   );
 }

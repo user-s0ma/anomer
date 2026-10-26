@@ -10,7 +10,7 @@ export function ErrorBoundary() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
       <p>{t("notFound")}</p>
-      <Link to="/" className="text-sm font-semibold text-accent hover:underline">
+      <Link to="/" className="text-sm font-semibold hover:underline">
         {t("common.back")}
       </Link>
     </div>

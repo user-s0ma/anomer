@@ -48,7 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="min-h-dvh bg-canvas text-ink">
+      <body className="min-h-dvh bg-white text-black">
         {children}
         <Toaster richColors position="top-center" />
         <ScrollRestoration />

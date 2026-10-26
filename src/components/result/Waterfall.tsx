@@ -41,12 +41,13 @@ export function Waterfall({
   const max = hi + pad;
   const x = (v: number) => `${((v - min) / (max - min)) * 100}%`;
   const fmt = (v: number, signed = false) => formatValue(v, unit, locale, { signed });
+  const grid = "grid grid-cols-[minmax(0,8rem)_1fr_4.5rem] items-center gap-3 py-1.5 sm:grid-cols-[minmax(0,13rem)_1fr_5rem]";
 
   const totalRow = (label: string, value: number) => (
-    <div className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3 py-1.5 sm:grid-cols-[minmax(0,12rem)_1fr_5.5rem]">
-      <div className="truncate text-sm font-semibold">{label}</div>
-      <div className="relative h-7">
-        <div className="absolute inset-y-0 w-0.5 rounded bg-ink" style={{ left: x(value) }} />
+    <div className={grid}>
+      <div className="truncate text-sm text-black/50">{label}</div>
+      <div className="relative h-6">
+        <div className="absolute inset-y-0 w-0.5 rounded bg-black" style={{ left: x(value) }} />
       </div>
       <div className="num text-right text-sm font-semibold">{fmt(value)}</div>
     </div>
@@ -58,39 +59,35 @@ export function Waterfall({
       {bars.map((bar) => {
         const left = Math.min(bar.start, bar.end);
         const right = Math.max(bar.start, bar.end);
-        const color = bar.kind === "unexplained" ? "bg-unknown" : bar.value >= 0 ? "bg-up" : "bg-down";
+        const color = bar.kind === "unexplained" ? "bg-black/20" : bar.value >= 0 ? "bg-up" : "bg-down";
         return (
-          <div
-            key={bar.key}
-            className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3 border-t border-line py-1.5 sm:grid-cols-[minmax(0,12rem)_1fr_5.5rem]"
-          >
-            <div className="truncate text-sm text-ink-soft" title={bar.label}>
+          <div key={bar.key} className={grid}>
+            <div className="truncate text-sm" title={bar.label}>
               {bar.label}
             </div>
-            <div className="relative h-7">
-              {/* 前の行の終わりからの補助線 */}
-              <div className="absolute inset-y-0 w-px bg-line-strong/50" style={{ left: x(bar.start) }} />
+            <div className="relative h-6">
+              <div className="absolute inset-y-0 w-px bg-black/20" style={{ left: x(bar.start) }} />
               <div
-                className={`absolute top-1.5 h-4 rounded-sm ${color}`}
-                style={{ left: x(left), width: `max(2px, calc(${x(right)} - ${x(left)}))` }}
+                className={`absolute top-1 h-4 rounded-full ${color}`}
+                style={{ left: x(left), width: `max(3px, calc(${x(right)} - ${x(left)}))` }}
               />
               {bar.margin !== undefined && bar.margin > 0 && (
                 <div
-                  className="absolute top-1/2 h-px bg-ink"
+                  className="absolute top-1/2 h-px bg-black"
                   style={{ left: x(bar.end - bar.margin), width: `calc(${x(bar.end + bar.margin)} - ${x(bar.end - bar.margin)})` }}
                 >
-                  <span className="absolute -top-1.5 left-0 h-3 w-px bg-ink" />
-                  <span className="absolute -top-1.5 right-0 h-3 w-px bg-ink" />
+                  <span className="absolute -top-1 left-0 h-2 w-px bg-black" />
+                  <span className="absolute -top-1 right-0 h-2 w-px bg-black" />
                 </div>
               )}
             </div>
-            <div className={`num text-right text-sm font-medium ${bar.kind === "unexplained" ? "text-ink-mute" : bar.value >= 0 ? "text-up" : "text-down"}`}>
+            <div className={`num text-right text-sm font-medium ${bar.kind === "unexplained" ? "text-black/50" : bar.value >= 0 ? "text-up" : "text-down"}`}>
               {fmt(bar.value, true)}
             </div>
           </div>
         );
       })}
-      <div className="border-t border-line">{totalRow(labels.after, after)}</div>
+      {totalRow(labels.after, after)}
     </div>
   );
 }
