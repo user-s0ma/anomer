@@ -80,7 +80,7 @@ export default function Landing() {
       <section className="border-t border-black/10">
         <div className="ui-container grid gap-10 py-20 md:grid-cols-3">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="border-t-2 border-accent pt-6">
+            <div key={n}>
               <h2 className="text-lg font-semibold">{t(`landing.step${n}Title`)}</h2>
               <p className="mt-3 text-sm leading-relaxed text-black/50">{t(`landing.step${n}Body`)}</p>
             </div>
