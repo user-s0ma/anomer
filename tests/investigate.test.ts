@@ -41,7 +41,7 @@ test("仕込んだ原因 (広告の停止、雨、25日) を内訳で当てる",
     return 150 + weekend + payday + adEffect - 2 * rain[t] + 3 * normal(rand);
   });
 
-  const series = (key: string, values: number[]): MetricSeries => ({ key, values });
+  const series = (key: string, values: number[]): MetricSeries => ({ key, group: key, values });
   // 比べる期間 (10/22〜28) は 25日を含み、変化の期間 (10/29〜11/4) は含まない
   const result = investigate({
     dates,
@@ -54,7 +54,7 @@ test("仕込んだ原因 (広告の停止、雨、25日) を内訳で当てる",
   const byKey = new Map(result.groups.map((g) => [g.key, g]));
   const sum = (values: number[]) => values.reduce((s, v) => s + v, 0);
   // 広告は1日遅れで効く。仕込んだ寄与 = 1.5 × (前日の広告費の、期間どうしの合計の差)
-  const adGroup = byKey.get("metric:ad_spend");
+  const adGroup = byKey.get("source:ad_spend");
   assert.ok(adGroup, "広告費が残る");
   const plantedAds = 1.5 * (sum(ads.slice(changeStart - 1, n - 1)) - sum(ads.slice(changeStart - 8, changeStart - 1)));
   assert.ok(Math.abs(adGroup.contribution - plantedAds) <= adGroup.margin, `広告の寄与 ${adGroup.contribution} ± ${adGroup.margin}、仕込んだ値 ${plantedAds}`);
@@ -63,7 +63,7 @@ test("仕込んだ原因 (広告の停止、雨、25日) を内訳で当てる",
   assert.ok(payday, "月の中の日 (25日) が残る");
   assert.ok(Math.abs(payday.contribution - -40) <= payday.margin, `25日の寄与 ${payday.contribution} ± ${payday.margin}`);
 
-  const unrelatedGroup = byKey.get("metric:unrelated");
+  const unrelatedGroup = byKey.get("source:unrelated");
   assert.ok(!unrelatedGroup || Math.abs(unrelatedGroup.contribution) < 30, "関係のない数字はほとんど効かない");
 
   // 内訳の合計 + 説明できない分 = 実際の変化

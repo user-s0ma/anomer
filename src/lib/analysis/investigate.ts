@@ -19,6 +19,8 @@ export type Aggregation = "sum" | "mean";
 
 export type MetricSeries = {
   key: string;
+  /** 内訳でまとめる組 (データ源)。似た動きの数字 (表示とリーチなど) は、片方だけが残ったり打ち消し合ったりするので、組で見る */
+  group: string;
   /** dates と同じ並びの日別の値。まだ届いていない日は null */
   values: (number | null)[];
 };
@@ -26,7 +28,7 @@ export type MetricSeries = {
 export type InvestigationInput = {
   /** 連続した日付 (YYYY-MM-DD)、古い順 */
   dates: string[];
-  target: MetricSeries & { aggregation: Aggregation };
+  target: Omit<MetricSeries, "group"> & { aggregation: Aggregation };
   /** 原因の候補にする数字 (調べる対象と、そこから計算される数字は入れない) */
   candidates: MetricSeries[];
   change: { start: string; end: string };
@@ -39,7 +41,7 @@ export type ColumnKind =
   | { type: "dayOfMonth"; day: number }
   | { type: "metric"; key: string; lag: number };
 
-export type GroupKey = "trend" | "dayOfWeek" | "dayOfMonth" | `metric:${string}`;
+export type GroupKey = "trend" | "dayOfWeek" | "dayOfMonth" | `source:${string}`;
 
 export type BreakdownGroup = {
   key: GroupKey;
@@ -47,8 +49,8 @@ export type BreakdownGroup = {
   contribution: number;
   /** 寄与の 95% の幅 (± の大きさ) */
   margin: number;
-  /** この組の中で残った列と係数 (元の単位) */
-  columns: { column: ColumnKind; coefficient: number; changeValue: number; baselineValue: number }[];
+  /** この組の中で残った列。contribution は列ごとの寄与 (幅は組でしか出さない) */
+  columns: { column: ColumnKind; coefficient: number; changeValue: number; baselineValue: number; contribution: number }[];
 };
 
 export type InvestigationResult = {
@@ -90,10 +92,6 @@ function dayOfMonth(date: string) {
   return Number(date.slice(8, 10));
 }
 
-export function groupOf(column: ColumnKind): GroupKey {
-  if (column.type === "metric") return `metric:${column.key}`;
-  return column.type;
-}
 
 export function investigate(input: InvestigationInput): InvestigationResult {
   const { dates, target, candidates } = input;
@@ -129,6 +127,8 @@ export function investigate(input: InvestigationInput): InvestigationResult {
   for (let d = 1; d <= 31; d++) kinds.push({ type: "dayOfMonth", day: d });
   for (const series of usable) for (let lag = 0; lag <= MAX_LAG_DAYS; lag++) kinds.push({ type: "metric", key: series.key, lag });
   const seriesByKey = new Map(usable.map((s) => [s.key, s]));
+  const groupOf = (column: ColumnKind): GroupKey =>
+    column.type === "metric" ? `source:${seriesByKey.get(column.key)!.group}` : column.type;
 
   const valueAt = (kind: ColumnKind, t: number): number | null => {
     switch (kind.type) {
@@ -198,9 +198,10 @@ export function investigate(input: InvestigationInput): InvestigationResult {
     const baselineValue = windowMean(j, baselineStart, baselineEnd);
     const key = groupOf(kind);
     const group = groups.get(key) ?? { delta: [], indices: [], columns: [] };
-    group.delta.push((changeValue - baselineValue) * scale);
+    const delta = (changeValue - baselineValue) * scale;
+    group.delta.push(delta);
     group.indices.push(k);
-    group.columns.push({ column: kind, coefficient: beta[k], changeValue, baselineValue });
+    group.columns.push({ column: kind, coefficient: beta[k], changeValue, baselineValue, contribution: beta[k] * delta });
     groups.set(key, group);
   });
 
