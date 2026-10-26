@@ -1,10 +1,11 @@
 import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Camera, Check, CloudSun, Megaphone, Plus, Search, ShoppingBag, Trash2, type LucideIcon } from "lucide-react";
+import { Check, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageBody } from "@/components/PageBody";
 import { formatDate, formatValue } from "@/components/result/format";
+import { SOURCE_ICONS } from "@/components/source-icons";
 import { Modal } from "@/components/ui/Modal";
 import { RowMenu } from "@/components/ui/RowMenu";
 import { connectSource, disconnectSource, getData, getSources, type Connection, type DataResponse } from "@/lib/api-client";
@@ -14,15 +15,8 @@ import { useMe } from "./_layout";
 /** 詳しい画面のグラフに出す日数 */
 const DAYS = 90;
 
-const ICONS: Record<SourceDefinition["icon"], LucideIcon> = {
-  orders: ShoppingBag,
-  ads: Megaphone,
-  social: Camera,
-  weather: CloudSun,
-};
-
 function SourceIcon({ icon }: { icon: SourceDefinition["icon"] }) {
-  const Icon = ICONS[icon];
+  const Icon = SOURCE_ICONS[icon];
   return (
     <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white">
       <Icon className="size-5 text-black/50" />

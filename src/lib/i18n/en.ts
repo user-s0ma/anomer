@@ -20,12 +20,6 @@ const en = {
   landing: {
     headline: "Why did orders drop last week?",
     lead: "Ask why a number changed. Anomer checks your ads, Instagram, orders and weather, and shows how much each cause contributed.",
-    step1Title: "Muse Spark reads the question",
-    step1Body: "It picks the number, the periods, and what can't be a cause.",
-    step2Title: "Lasso tests every candidate",
-    step2Body: "One sparse regression over every number, shifted 0–7 days.",
-    step3Title: "Muse Spark explains the result",
-    step3Body: "It explains each part using only the computed numbers.",
     sample: {
       question: "Why were orders lower Oct 12–18?",
       before: "Oct 5–11",
@@ -36,6 +30,35 @@ const en = {
       weather: "Weather",
       caption: "Simulated bakery with a planted ad-pause effect of about −129",
     },
+    check: {
+      planted: "Planted ad-pause effect (orders)",
+      found: "Anomer's estimate (95% range)",
+      body: "The demo shop has a planted effect from pausing ads for a week. Without knowing the answer, Anomer recovered this value from the change in orders.",
+    },
+    steps: {
+      title: "From question to answer",
+      read: { title: "Muse Spark reads the question", body: "It picks the number and the two periods to compare, and leaves out numbers that are results rather than causes (such as orders when asking about revenue)." },
+      fit: { title: "Lasso tests every candidate", body: "Every connected number, shifted 0–7 days, goes into one regression with the day of the week, the day of the month and the long-term trend. Candidates that don't matter drop to zero." },
+      explain: { title: "Muse Spark explains the result", body: "It gets only the computed breakdown and explains the main causes in plain words." },
+    },
+    sources: {
+      title: "Data you connect",
+      lead: "Every data source is a plugin with the same shape. Adding one adds candidate causes.",
+    },
+    principles: {
+      title: "Code computes the numbers",
+      numbers: { title: "The AI makes up no numbers", body: "Every number in the breakdown comes from the regression. The AI only writes the explanation." },
+      range: { title: "Ranges, not just points", body: "Each cause has a 95% range. When the range crosses zero, the answer says it may be noise." },
+      unexplained: { title: "The rest stays visible", body: "Whatever the causes don't explain is shown as \"Unexplained\"." },
+    },
+    faq: {
+      title: "Questions",
+      data: { q: "What data do I need?", a: "Upload orders as a CSV with order_id, created_at, customer_id and total. Ads and Instagram are read in the shape of Meta's Graph API, and weather only needs a city." },
+      history: { q: "How much history do I need?", a: "The demo shop uses 400 days. About a year lets Anomer see monthly patterns such as paydays." },
+      demo: { q: "Is the demo data real?", a: "Weather is real NOAA data for Portland. Ads, Instagram and orders are simulated, with causes planted so the answer can be checked." },
+      privacy: { q: "What happens to uploaded orders?", a: "They are stored as daily counts and totals. Individual orders are not kept." },
+    },
+    final: "When a number moves, ask why.",
     weatherCredit: "Weather: NOAA NCEI",
     hackathon: "Built for the Meta Global AI Developer Hackathon 2026",
   },

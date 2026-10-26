@@ -22,12 +22,6 @@ const ja: Dictionary = {
   landing: {
     headline: "先週、注文が落ちたのはなぜ？",
     lead: "数字が動いた理由を聞いてください。広告、Instagram、注文、天気を調べ、原因ごとにどれだけ効いたかを示します。",
-    step1Title: "Muse Spark が質問を読む",
-    step1Body: "調べる数字と期間を決め、原因になりえない数字を外します。",
-    step2Title: "Lasso が候補をまとめて試す",
-    step2Body: "すべての数字を0〜7日ずらし、1本の疎な回帰に入れます。",
-    step3Title: "Muse Spark が結果を説明する",
-    step3Body: "計算した数字だけを使って、それぞれを説明します。",
     sample: {
       question: "10/12〜18の注文が減ったのはなぜ？",
       before: "10/5〜11",
@@ -38,6 +32,35 @@ const ja: Dictionary = {
       weather: "天気",
       caption: "広告停止の効果を約 −129 件仕込んだ架空のパン屋",
     },
+    check: {
+      planted: "仕込んだ広告停止の効果 (件)",
+      found: "Anomer の推定 (95% の幅)",
+      body: "デモの店には、広告を1週間止めた効果を仕込んであります。Anomer はその答えを知らずに、注文の差からこの値を取り出しました。",
+    },
+    steps: {
+      title: "質問から答えまで",
+      read: { title: "Muse Spark が質問を読む", body: "調べる数字と、比べる2つの期間を決めます。結果から決まる数字 (売上に対する注文数など) は原因の候補から外します。" },
+      fit: { title: "Lasso が候補をまとめて試す", body: "つないだすべての数字を0〜7日ずらし、曜日や月の中の日、長い傾向と一緒に1本の回帰に入れます。効かない候補は0になります。" },
+      explain: { title: "Muse Spark が結果を説明する", body: "計算した内訳だけを渡し、主な原因を店の言葉で説明させます。" },
+    },
+    sources: {
+      title: "つなぐデータ",
+      lead: "どのデータ源も同じ形のプラグインで、足せば原因の候補が増えます。",
+    },
+    principles: {
+      title: "数字はコードが出す",
+      numbers: { title: "AI は数字を作らない", body: "内訳の数字はすべて回帰の計算から出します。AI が書くのは、その数字の説明だけです。" },
+      range: { title: "誤差の幅を出す", body: "原因ごとに 95% の幅をつけます。幅が0をまたぐものは、偶然かもしれないと書きます。" },
+      unexplained: { title: "説明できない分も出す", body: "原因で説明しきれなかった差は、そのまま「説明できない分」として残します。" },
+    },
+    faq: {
+      title: "よくある質問",
+      data: { q: "どんなデータが要りますか？", a: "注文は order_id、created_at、customer_id、total の列がある CSV を上げます。広告と Instagram は Meta の Graph API と同じ形で読み、天気は都市を選ぶだけです。" },
+      history: { q: "どれくらいの期間が要りますか？", a: "デモの店は400日分を使っています。月の中の日の癖 (給料日など) を見るには、1年分ほどあると確かです。" },
+      demo: { q: "デモのデータは本物ですか？", a: "天気は Portland の NOAA の観測値です。広告、Instagram、注文は作ったデータで、答え合わせができるように原因を仕込んであります。" },
+      privacy: { q: "上げた注文はどう扱われますか？", a: "日ごとの件数と金額にまとめて保存します。注文1件ずつの中身は残しません。" },
+    },
+    final: "数字が動いたら、聞いてください。",
     weatherCredit: "天気: NOAA NCEI",
     hackathon: "Meta Global AI Developer Hackathon 2026 のために作りました",
   },
