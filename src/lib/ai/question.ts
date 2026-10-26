@@ -92,8 +92,12 @@ First choose kind:
 For kind change, decide:
 1. target: the number the owner asks about.
 2. change period: the days the owner points at. Read relative dates in the shop's time zone. "Last week" means the most recent full Monday-to-Sunday week before today. "Yesterday" is one day. If no period is given, use the 7 days ending on the last day the target has data.
-3. baseline period: the days to compare with. It must have the same number of days as the change period and end before it starts. Use the period the owner names ("compared with the same week last month", "vs the week before"); otherwise use the days right before the change period.
-4. excluded: numbers that cannot be causes of the target, because they are computed from the target, are a part of it, or are decided after it (for example, when the target is orders: revenue, customers counted from those orders, and orders that the ad platform attributes to ads). Keep numbers that could plausibly drive the target, even if they are correlated with it. When the target is not orders, think the same way for that target.
+3. baseline period: the days to compare with. It must have the same number of days as the change period and end before it starts. Use the period the owner names ("compared with the same week last month", "vs the week before"); otherwise use the days right before the change period. When the change period is shorter than 7 days, use the same days of the week one week earlier instead, so that both periods have the same weekdays.
+4. excluded: numbers that cannot be causes of the target because they are tied to it by arithmetic or bookkeeping, in either direction:
+   - numbers computed from the target, or that count a part of it (when the target is orders: revenue, average order value, new and returning customers, and orders that the ad platform attributes to ads);
+   - numbers the target is computed from, or made up of (when the target is revenue: orders and average order value, and the customers and ad purchases that make up those orders);
+   - numbers decided after the target.
+   Keep numbers that could plausibly drive the target, even if they are correlated with it. Think the same way for any target.
 
 The change period must end on or before the target's last data date, and the baseline must start on or after ${addDays(context.dataStart, MAX_LAG_DAYS)}.
 For kind explore, choose 1 to ${MAX_ANALYSES} analyses that together answer the question:
