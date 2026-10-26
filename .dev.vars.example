@@ -6,7 +6,7 @@ VITE_PUBLIC_APP_URL=http://localhost:5190
 
 # --- Auth (better-auth: email/password)
 BETTER_AUTH_SECRET=replace-with-a-long-random-string
-# Leave empty to disable the captcha in local development (http:// only)
+# Turnstile is skipped on http://localhost, so this is not needed locally
 TURNSTILE_SECRET_KEY=
 
 # --- Meta Model API (https://dev.meta.ai)

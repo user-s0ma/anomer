@@ -7,11 +7,11 @@ import { getDb } from "../db/client";
 import * as schema from "../db/schema";
 import { DEMO_EMAIL, DEMO_NAME } from "./demo";
 
-/** Turnstile を外すのは、キーが空で、しかも http:// (手元) のときだけ */
+/** 手元 (http://localhost) では Turnstile を外す。それ以外でキーが空なら止める */
 function turnstileDisabled(env: AppEnv, baseURL: string) {
-  if (env.TURNSTILE_SECRET_KEY?.trim()) return false;
-  if (!baseURL.startsWith("http://")) throw new Error("TURNSTILE_SECRET_KEY が設定されていません");
-  return true;
+  if (baseURL.startsWith("http://localhost")) return true;
+  if (!env.TURNSTILE_SECRET_KEY?.trim()) throw new Error("TURNSTILE_SECRET_KEY が設定されていません");
+  return false;
 }
 
 /** お試しの共有アカウントでも使える認証の経路。ほかの経路 (パスワードやメールの変更、退会、セッションの一覧・取り消し) は止める */

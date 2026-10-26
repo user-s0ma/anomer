@@ -59,7 +59,7 @@ npm run db:migrate:local
 npm run dev                      # http://localhost:5190
 ```
 
-Turnstile is skipped locally when `TURNSTILE_SECRET_KEY` is empty. `npm test` runs the analysis tests. `npx tsx scripts/try-demo.ts` computes the demo shop's breakdown from the command line and prints the planted ad effect next to it.
+Turnstile is skipped on `http://localhost`. `npm test` runs the analysis tests. `npx tsx scripts/try-demo.ts` computes the demo shop's breakdown from the command line and prints the planted ad effect next to it.
 
 To deploy to Cloudflare Workers: create the D1 database named in `wrangler.jsonc`, run `npm run db:migrate`, set `BETTER_AUTH_SECRET`, `META_MODEL_API_KEY` and `TURNSTILE_SECRET_KEY` with `wrangler secret put`, put your URL and Turnstile site key in `.env.production`, and run `npm run deploy`.
 
