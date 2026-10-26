@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4670f430-eeef-47ad-866d-fe8e55e954fe",
+  "id": "3af90d8e-c107-4646-b1a2-2689c13f384b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "Account": {
@@ -549,6 +549,66 @@
             "sourceId"
           ],
           "name": "ShopSource_userId_sourceId_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "SourceUpload": {
+      "name": "SourceUpload",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sourceId": {
+          "name": "sourceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "upload": {
+          "name": "upload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "SourceUpload_userId_Shop_userId_fk": {
+          "name": "SourceUpload_userId_Shop_userId_fk",
+          "tableFrom": "SourceUpload",
+          "tableTo": "Shop",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "SourceUpload_userId_sourceId_pk": {
+          "columns": [
+            "userId",
+            "sourceId"
+          ],
+          "name": "SourceUpload_userId_sourceId_pk"
         }
       },
       "uniqueConstraints": {},

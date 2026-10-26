@@ -79,6 +79,15 @@ CREATE TABLE `ShopSource` (
 	FOREIGN KEY (`userId`) REFERENCES `Shop`(`userId`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `SourceUpload` (
+	`userId` text NOT NULL,
+	`sourceId` text NOT NULL,
+	`upload` text NOT NULL,
+	`createdAt` integer NOT NULL,
+	PRIMARY KEY(`userId`, `sourceId`),
+	FOREIGN KEY (`userId`) REFERENCES `Shop`(`userId`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE `Usage` (
 	`key` text PRIMARY KEY NOT NULL,
 	`count` integer NOT NULL,

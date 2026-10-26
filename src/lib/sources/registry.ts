@@ -1,9 +1,10 @@
-import { instagramSimulator, metaAdsSimulator, ordersSimulator } from "./plugins/simulated";
-import { weatherPlugin } from "./plugins/weather";
-import type { DailyValues, DataSourcePlugin } from "./types";
+import { orders } from "./plugins/orders";
+import { instagram, metaAds } from "./plugins/simulated";
+import { weather } from "./plugins/weather";
+import type { DailyValues, DataSourcePlugin, Upload } from "./types";
 
 /** いま使えるデータ源 (プラグイン)。新しいデータ源は、ここに足す */
-const PLUGINS: DataSourcePlugin<never>[] = [weatherPlugin, metaAdsSimulator, instagramSimulator, ordersSimulator] as DataSourcePlugin<never>[];
+const PLUGINS = [weather, metaAds, instagram, orders] as unknown as DataSourcePlugin<never>[];
 
 export const PLUGIN_BY_ID = new Map(PLUGINS.map((plugin) => [plugin.definition.id, plugin]));
 
@@ -13,7 +14,11 @@ export type Connection = { sourceId: string; config: unknown };
  * 店がつないだデータ源から、dates の日別の値を集める。ほかのデータ源の値を使うものは、それを先に取る。
  * 返すのは数字の名前ごとの値 (届くまでの遅れは、まだ当てていない)
  */
-export async function collect(connections: Connection[], dates: string[]): Promise<DailyValues> {
+export async function collect(
+  connections: Connection[],
+  dates: string[],
+  context: { timezone: string; uploads: Map<string, Upload> },
+): Promise<DailyValues> {
   const byId = new Map(connections.map((connection) => [connection.sourceId, connection]));
   const values: DailyValues = {};
   const done = new Set<string>();
@@ -29,7 +34,13 @@ export async function collect(connections: Connection[], dates: string[]): Promi
     visiting.add(id);
     for (const dependency of plugin.definition.dependsOn) await run(dependency);
     const config = plugin.config.parse(connection.config);
-    const result = await plugin.fetch({ config: config as never, dates, inputs: values });
+    const result = await plugin.fetch({
+      config: config as never,
+      dates,
+      timezone: context.timezone,
+      inputs: values,
+      upload: context.uploads.get(id) ?? null,
+    });
     for (const metric of plugin.definition.metrics) {
       const list = result[metric.key];
       if (!list || list.length !== dates.length) throw new Error(`${id} が ${metric.key} を ${dates.length} 日分返しませんでした`);

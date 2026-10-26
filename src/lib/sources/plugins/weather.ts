@@ -4,10 +4,14 @@ import { WEATHER } from "../definitions";
 import type { DataSourcePlugin } from "../types";
 import { fetchWeather } from "../weather";
 
+const weatherConfig = z.object({ cityId: z.string().refine((id) => CITY_BY_ID.has(id), "unknown city") });
+
 /** 本物の天気 (NOAA の観測所の日別の値)。店の都市の観測所から取る */
-export const weatherPlugin: DataSourcePlugin<{ cityId: string }> = {
+export const weather: DataSourcePlugin<z.infer<typeof weatherConfig>> = {
   definition: WEATHER,
-  config: z.object({ cityId: z.string().refine((id) => CITY_BY_ID.has(id), "unknown city") }),
+  config: weatherConfig,
+  fromSettings: (settings) => weatherConfig.parse(settings),
+  isDemo: () => false,
   async fetch({ config, dates }) {
     const city = CITY_BY_ID.get(config.cityId)!;
     const days = await fetchWeather(city.station, dates[0], dates[dates.length - 1]);

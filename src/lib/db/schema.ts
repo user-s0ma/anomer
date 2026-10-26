@@ -108,6 +108,20 @@ export const shopSource = sqliteTable(
   (table) => [primaryKey({ columns: [table.userId, table.sourceId] })],
 );
 
+/** ファイルを上げるデータ源の、上げたファイルを日別にまとめたもの (Upload の JSON) */
+export const sourceUpload = sqliteTable(
+  "SourceUpload",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => shop.userId, { onDelete: "cascade" }),
+    sourceId: text("sourceId").notNull(),
+    upload: text("upload").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.sourceId] })],
+);
+
 /** 数字ごとの日別の値。dataStart から並べた JSON の配列 (まだ届いていない日は null) */
 export const series = sqliteTable(
   "Series",

@@ -15,5 +15,17 @@ export function dateRange(start: string, end: string) {
 
 /** そのタイムゾーンでの今日 */
 export function todayIn(timezone: string, now = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  return dateIn(timezone, now);
+}
+
+const dateFormats = new Map<string, Intl.DateTimeFormat>();
+
+/** その時刻の、そのタイムゾーンでの日付 (書式はタイムゾーンごとに1回だけ作る) */
+export function dateIn(timezone: string, at: Date) {
+  let format = dateFormats.get(timezone);
+  if (!format) {
+    format = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" });
+    dateFormats.set(timezone, format);
+  }
+  return format.format(at);
 }

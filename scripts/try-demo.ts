@@ -1,23 +1,39 @@
-// 手元の確認: 本物の天気 (NOAA) とシミュレーターのデータ源から値を集め、仕込んだ原因が内訳に出るかを見る
+// 手元の確認: 新しい店と同じデモのデータ (Graph API と同じ形の応答、注文の CSV) を本物と同じ読み込み処理で読み、
+// 仕込んだ原因が内訳に出るかを見る
 // npx tsx scripts/try-demo.ts [調べる数字] [変化の始め,終わり,比べる期間の始め,終わり]
 import { investigate } from "../src/lib/analysis/investigate";
+import { starterSources } from "../src/lib/shop/setup";
+import { CITY_BY_ID } from "../src/lib/sources/cities";
 import { SOURCES, sourcedMetrics } from "../src/lib/sources/definitions";
-import { collect, type Connection } from "../src/lib/sources/registry";
+import { collect, PLUGIN_BY_ID, type Connection } from "../src/lib/sources/registry";
+import type { Upload } from "../src/lib/sources/types";
 import { addDays, dateRange } from "../src/lib/util/dates";
 
-// 天気が届いている最後の日を基準に、店の作りと同じく原因を仕込む (src/lib/shop/setup.ts)
-const recentDates = dateRange("2026-09-01", addDays(new Date().toISOString().slice(0, 10), -1));
-const recent = await collect([{ sourceId: "weather", config: { cityId: "portland" } }], recentDates);
-const end = recentDates[recent.precipitation.findLastIndex((v, i) => v !== null || recent.temp_max[i] !== null)];
+const city = CITY_BY_ID.get("portland")!;
+const timezone = city.timezone;
 const seed = 20261027;
-const connections: Connection[] = [
-  { sourceId: "weather", config: { cityId: "portland" } },
-  { sourceId: "meta_ads", config: { seed, pausedFrom: addDays(end, -12), pausedTo: addDays(end, -6) } },
-  { sourceId: "instagram", config: { seed, viralReel: addDays(end, -26) } },
-  { sourceId: "orders", config: { seed } },
-];
-const dates = dateRange(addDays(end, -400), end);
-const data = await collect(connections, dates);
+
+// 天気が届いている最後の日を基準にする (src/lib/shop/setup.ts と同じ)
+const recentDates = dateRange("2026-09-01", addDays(new Date().toISOString().slice(0, 10), -1));
+const recent = await collect([{ sourceId: "weather", config: { cityId: city.id } }], recentDates, { timezone, uploads: new Map() });
+const end = recentDates[recent.precipitation.findLastIndex((v, i) => v !== null || recent.temp_max[i] !== null)];
+const dataStart = addDays(end, -400);
+
+// 店をつなぐときと同じく、設定とファイルからつなぎ方を作る
+const connections: Connection[] = [];
+const uploads = new Map<string, Upload>();
+for (const source of await starterSources(city.id, timezone, seed, end, dataStart)) {
+  const plugin = PLUGIN_BY_ID.get(source.sourceId)!;
+  const settings = { ...source.settings };
+  if (plugin.ingest && source.file) {
+    const ingested = plugin.ingest(source.file, timezone);
+    uploads.set(source.sourceId, ingested.upload);
+    Object.assign(settings, ingested.settings);
+  }
+  connections.push({ sourceId: source.sourceId, config: plugin.fromSettings(settings) });
+}
+const dates = dateRange(dataStart, end);
+const data = await collect(connections, dates, { timezone, uploads });
 const metrics = sourcedMetrics(SOURCES);
 
 const target = process.argv[2] ?? "orders";

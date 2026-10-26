@@ -78,7 +78,7 @@ export default function Sources() {
   const open = openId ? connected.find((c) => c.sourceId === openId) : undefined;
   const query = keyword.trim().toLowerCase();
   const catalog = query
-    ? available.filter((s) => [s.label.en, s.label.ja, s.description.en, s.description.ja, s.modeledOn].some((text) => text.toLowerCase().includes(query)))
+    ? available.filter((s) => [s.label.en, s.label.ja, s.description.en, s.description.ja, s.format].some((text) => text.toLowerCase().includes(query)))
     : available;
 
   return (
@@ -112,9 +112,8 @@ export default function Sources() {
                   <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpenId(connection.sourceId)}>
                     <p className="truncate text-sm">{source.label[locale]}</p>
                     <p className="truncate text-xs text-black/50">
-                      {source.kind === "live" ? t("sources.live") : t("sources.simulated")}
-                      {" ・ "}
-                      {source.modeledOn}
+                      {connection.demo && `${t("sources.demoData")} ・ `}
+                      {source.format}
                       {lastDate && ` ・ ${t("sources.until", { date: formatDate(lastDate, locale) })}`}
                     </p>
                   </button>
@@ -189,10 +188,18 @@ export default function Sources() {
   );
 }
 
-/** 設定の値を、画面に出す文字にする */
-function settingText(field: SourceDefinition["settings"][number], value: unknown, cities: { id: string; label: string }[], locale: Locale) {
+/** 設定の値を、画面に出す文字にする (ファイルは、上げたファイルの名前と行数) */
+function settingText(
+  field: SourceDefinition["settings"][number],
+  config: Record<string, unknown>,
+  cities: { id: string; label: string }[],
+  locale: Locale,
+  t: (key: string, values?: Record<string, unknown>) => string,
+) {
+  const value = config[field.key];
   if (field.type === "city") return cities.find((c) => c.id === value)?.label ?? String(value);
   if (field.type === "date") return formatDate(String(value), locale);
+  if (field.type === "file") return `${String(config.filename)} ・ ${t("sources.rows", { count: Number(config.rows) })}`;
   return String(value);
 }
 
@@ -219,7 +226,7 @@ function SourceDetail({
           {source.settings.map((field) => (
             <div key={field.key} className="flex justify-between gap-3 border-b border-black/10 py-1.5">
               <dt className="text-black/50">{field.label[locale]}</dt>
-              <dd className="num">{settingText(field, connection.config[field.key], cities, locale)}</dd>
+              <dd className="num truncate">{settingText(field, connection.config, cities, locale, t)}</dd>
             </div>
           ))}
         </dl>
@@ -263,8 +270,9 @@ function AddSource({
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [file, setFile] = useState<{ name: string; text: string } | null>(null);
   const add = useMutation({
-    mutationFn: () => connectSource(source.id, settings),
+    mutationFn: () => connectSource(source.id, settings, file ?? undefined),
     onSuccess: onAdded,
     onError: (error: Error) => toast.error(error.message),
   });
@@ -283,7 +291,18 @@ function AddSource({
           .map((field) => (
             <label key={field.key} className="block">
               <span className="mb-1 block text-xs">{field.label[locale]}</span>
-              {field.type === "city" ? (
+              {field.type === "file" ? (
+                <input
+                  className="input py-2 text-sm"
+                  type="file"
+                  accept=".csv,text/csv"
+                  required
+                  onChange={async (event) => {
+                    const chosen = event.target.files?.[0];
+                    setFile(chosen ? { name: chosen.name, text: await chosen.text() } : null);
+                  }}
+                />
+              ) : field.type === "city" ? (
                 <select
                   className="input"
                   required
@@ -309,6 +328,7 @@ function AddSource({
               )}
             </label>
           ))}
+        {source.via === "csv" && <p className="font-mono text-xs text-black/50">{source.format}</p>}
         {missing.length > 0 && <p className="text-sm text-down">{t("sources.needs", { names: missing.join(", ") })}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" className="button-secondary" onClick={onClose}>

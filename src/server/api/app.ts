@@ -10,7 +10,7 @@ import {
   listInvestigations,
   runInvestigation,
 } from "@/lib/investigations/service";
-import { connectSource, disconnectSource, getShop, listConnections, loadSeries, SourceError, syncShopData } from "@/lib/shop/service";
+import { connectSource, disconnectSource, getShop, isDemoConnection, listConnections, loadSeries, SourceError, syncShopData } from "@/lib/shop/service";
 import { SOURCES } from "@/lib/sources/definitions";
 import { createStarterShop, DEMO_SHOP, suggestedQuestions } from "@/lib/shop/setup";
 import { CITIES, CITY_BY_ID } from "@/lib/sources/cities";
@@ -66,18 +66,35 @@ app.get("/sources", async (c) => {
   const shop = await shopFor(c.env, c.get("user"));
   if (!shop) return c.json({ message: "Create your shop first." }, 404);
   const connections = await listConnections(c.env, shop.userId);
-  return c.json({ available: SOURCES, connected: connections });
+  return c.json({
+    available: SOURCES,
+    connected: connections.map((connection) => {
+      // アクセストークンは画面に返さない
+      const config = Object.fromEntries(Object.entries(connection.config as Record<string, unknown>).filter(([key]) => key !== "accessToken"));
+      return { sourceId: connection.sourceId, config, demo: isDemoConnection(connection) };
+    }),
+  });
 });
 
 app.post("/sources", async (c) => {
   const user = c.get("user");
   if (isDemoUser(user)) return c.json({ message: "The demo account cannot change data sources." }, 403);
   const body = z
-    .object({ sourceId: z.string().min(1).max(64), settings: z.record(z.string(), z.unknown()) })
+    .object({
+      sourceId: z.string().min(1).max(64),
+      settings: z.record(z.string(), z.unknown()),
+      file: z.object({ name: z.string().min(1).max(255), text: z.string().min(1) }).optional(),
+    })
     .safeParse(await c.req.json().catch(() => null));
   if (!body.success) return c.json({ message: "Please check the settings." }, 400);
+  const shop = await getShop(c.env, user.id);
+  if (!shop) return c.json({ message: "Create your shop first." }, 404);
   try {
-    await connectSource(c.env, user.id, body.data.sourceId, body.data.settings);
+    await connectSource(c.env, shop, {
+      sourceId: body.data.sourceId,
+      settings: body.data.settings,
+      file: body.data.file && { ...body.data.file, demo: false },
+    });
   } catch (error) {
     if (error instanceof SourceError) return c.json({ message: error.message }, 400);
     throw error;

@@ -1,11 +1,12 @@
 /**
- * 架空の店の数字を作るシミュレーター。広告・Instagram・注文を、形だけ本物の API に合わせて作る。
- * 3つのデータ源 (プラグイン) に分かれていて、注文は広告費・プロフィールへの訪問・本物の天気 (雨) を受け取って動く。
- * 同じ seed と入力からは、いつ作っても同じ数字になる (日ごとに乱数を作るので、日を足しても過去は変わらない)。
+ * 架空の店の「本当の値」を作るシミュレーター (デモ用)。広告・Instagram の日別の値と、注文の一件ずつを作る。
+ * データ源はこれを直接読まず、ここから作った Graph API と同じ形の応答 (meta/demo.ts) と注文の CSV (shop/setup.ts) を、
+ * 本物と同じ読み込み処理で読む。注文は広告費・Instagram の表示・本物の天気 (雨) で動く。
+ * 同じ seed と入力からは、いつ作っても同じ値になる (日ごとに乱数を作るので、日を足しても過去は変わらない)。
  *
  * 仕込んだ原因 (あとで AI の答えと比べる):
  * - 広告を止めた期間 (広告費が0になり、1〜2日遅れで注文が減る)
- * - リールが伸びた日 (プロフィールへの訪問が跳ね、その日と翌日の注文が増える)
+ * - リールが伸びた日 (表示が跳ね、その日と翌日の注文が増える)
  * - 給料日 (毎月1日と15日、その日と翌日に注文が増える)
  * - 雨 (降水量に比例して来店が減る。NOAA が降水量を出していない日は、雨の影響を入れない)
  * - 曜日 (週末に増える)、ゆるやかな成長
@@ -113,51 +114,70 @@ export function simulateAds(dates: string[], seed: number, paused: { start: stri
   return out;
 }
 
-/** Instagram。viralReel の日にリールが大きく伸びる */
-export function simulateInstagram(dates: string[], seed: number, viralReel: string) {
-  const out = table(
-    ["ig_followers", "ig_profile_visits", "ig_website_taps", "ig_feed_posts", "ig_reels", "ig_stories", "ig_views", "ig_reach", "ig_likes", "ig_saves", "ig_shares"],
-    dates.length,
-  );
-  let followers = 2400;
+const offsets = new Map<string, number>();
+
+/** その日の、タイムゾーンの UTC からの時差 (ミリ秒)。日付とタイムゾーンごとに1回だけ計算する */
+function utcOffsetMs(date: string, timezone: string) {
+  const key = `${timezone}:${date}`;
+  let offset = offsets.get(key);
+  if (offset === undefined) {
+    const noon = new Date(`${date}T12:00:00Z`);
+    offset = new Date(noon.toLocaleString("en-US", { timeZone: timezone })).getTime() - noon.getTime();
+    offsets.set(key, offset);
+  }
+  return offset;
+}
+
+/** その日のタイムゾーンでの hour 時を、UTC の ISO 8601 にする */
+export function localTimeToIso(date: string, hour: number, timezone: string) {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + hour * 3_600_000 - utcOffsetMs(date, timezone)).toISOString();
+}
+
+/** Instagram の投稿 (投稿の一覧に出るもの) */
+export type SimulatedMedia = { id: string; timestamp: string; media_product_type: "FEED" | "REELS" };
+
+/** 表示からの、プロフィールへの訪問の見込み (注文を呼ぶ) */
+function profileVisits(views: number) {
+  return SHOP.baseProfileVisits + views * 0.018;
+}
+
+/** Instagram。viralReel の日にリールが大きく伸びる。日別の値と、投稿の一覧を返す */
+export function simulateInstagram(dates: string[], seed: number, viralReel: string, timezone: string) {
+  const out = table(["reach", "views", "likes", "comments", "saves", "shares", "profile_links_taps"], dates.length);
+  const media: SimulatedMedia[] = [];
   dates.forEach((date, t) => {
     const rand = dailyRandom(seed, date, "instagram");
     const feedPosts = rand() < 0.35 ? 1 : 0;
     const isViral = date === viralReel;
     const reels = isViral || rand() < 0.18 ? 1 : 0;
-    const stories = poisson(rand, 1.4);
     const views = Math.round(
-      feedPosts * 900 * (1 + 0.3 * normal(rand)) +
-        reels * 2600 * (1 + 0.4 * Math.abs(normal(rand))) +
-        stories * 380 +
-        600 +
-        (isViral ? SHOP.viralViews : 0),
+      feedPosts * 900 * (1 + 0.3 * normal(rand)) + reels * 2600 * (1 + 0.4 * Math.abs(normal(rand))) + 900 + (isViral ? SHOP.viralViews : 0),
     );
-    const visits = poisson(rand, SHOP.baseProfileVisits + views * 0.018);
-    followers += poisson(rand, 4 + views * 0.0022);
-    out.ig_followers[t] = followers;
-    out.ig_profile_visits[t] = visits;
-    out.ig_website_taps[t] = poisson(rand, visits * 0.09);
-    out.ig_feed_posts[t] = feedPosts;
-    out.ig_reels[t] = reels;
-    out.ig_stories[t] = stories;
-    out.ig_views[t] = views;
-    out.ig_reach[t] = Math.round(views * (0.62 + 0.05 * rand()));
-    out.ig_likes[t] = poisson(rand, views * 0.035);
-    out.ig_saves[t] = poisson(rand, views * 0.004);
-    out.ig_shares[t] = poisson(rand, views * 0.002);
+    out.views[t] = views;
+    out.reach[t] = Math.round(views * (0.62 + 0.05 * rand()));
+    out.likes[t] = poisson(rand, views * 0.035);
+    out.comments[t] = poisson(rand, views * 0.003);
+    out.saves[t] = poisson(rand, views * 0.004);
+    out.shares[t] = poisson(rand, views * 0.002);
+    out.profile_links_taps[t] = poisson(rand, profileVisits(views) * 0.05);
+    if (feedPosts) media.push({ id: `${seed}-${date}-feed`, timestamp: localTimeToIso(date, 9, timezone), media_product_type: "FEED" });
+    if (reels) media.push({ id: `${seed}-${date}-reel`, timestamp: localTimeToIso(date, 18, timezone), media_product_type: "REELS" });
   });
-  return out;
+  return { daily: out, media };
 }
 
-/** 注文。広告費・プロフィールへの訪問・降水量 (届いていない日は null) を受け取って作る */
+/** 注文の一件 (CSV の1行になる) */
+export type SimulatedOrder = { id: string; createdAt: string; customerId: string; total: number };
+
+/** 注文を一件ずつ作る。広告費・Instagram の表示・降水量 (届いていない日は null) で動く */
 export function simulateOrders(
   dates: string[],
   seed: number,
-  inputs: { adSpend: (number | null)[]; profileVisits: (number | null)[]; precipitation: (number | null)[] },
+  timezone: string,
+  inputs: { adSpend: number[]; igViews: number[]; precipitation: (number | null)[] },
 ) {
-  const out = table(["orders", "revenue", "average_order_value", "new_customers", "returning_customers"], dates.length);
-  const spend = inputs.adSpend.map((v) => v ?? 0);
+  const orders: SimulatedOrder[] = [];
+  const customers: string[] = [];
   dates.forEach((date, t) => {
     const rand = dailyRandom(seed, date, "orders");
     const day = Number(date.slice(8, 10));
@@ -166,18 +186,28 @@ export function simulateOrders(
     const payday = [1, 2, 15, 16].includes(day) ? 1 + SHOP.paydayLift : 1;
     const rain = inputs.precipitation[t];
     const rainFactor = rain === null ? 1 : Math.max(SHOP.rainFloor, 1 - SHOP.rainPerMm * rain);
-    const visits = inputs.profileVisits[t] ?? SHOP.baseProfileVisits;
-    const visitsBefore = inputs.profileVisits[t - 1] ?? SHOP.baseProfileVisits;
+    const visits = profileVisits(inputs.igViews[t]);
+    const visitsBefore = t > 0 ? profileVisits(inputs.igViews[t - 1]) : SHOP.baseProfileVisits;
     const igOrders = SHOP.ordersPerProfileVisit * (visits + 0.5 * visitsBefore);
-    const expected = SHOP.baseOrders * growth * SHOP.dayOfWeek[dow] * payday * rainFactor + adDrivenOrders(spend, t) + igOrders;
-    const orders = poisson(rand, expected);
-    const aov = SHOP.averageOrderValue * (1 + 0.04 * normal(rand));
-    const newCustomers = Math.min(orders, Math.max(0, Math.round(orders * SHOP.newCustomerShare * (1 + 0.1 * normal(rand)))));
-    out.orders[t] = orders;
-    out.revenue[t] = r2(orders * aov);
-    out.average_order_value[t] = orders === 0 ? 0 : r2(aov);
-    out.new_customers[t] = newCustomers;
-    out.returning_customers[t] = orders - newCustomers;
+    const expected = SHOP.baseOrders * growth * SHOP.dayOfWeek[dow] * payday * rainFactor + adDrivenOrders(inputs.adSpend, t) + igOrders;
+    const count = poisson(rand, expected);
+    for (let k = 0; k < count; k++) {
+      // 新しい客か、前に来た客か
+      let customerId: string;
+      if (customers.length === 0 || rand() < SHOP.newCustomerShare) {
+        customerId = `C${String(customers.length + 1).padStart(6, "0")}`;
+        customers.push(customerId);
+      } else {
+        customerId = customers[Math.floor(rand() * customers.length)];
+      }
+      orders.push({
+        id: `${date.replaceAll("-", "")}-${String(k + 1).padStart(4, "0")}`,
+        // 7時から19時のどこか
+        createdAt: localTimeToIso(date, 7 + rand() * 12, timezone),
+        customerId,
+        total: r2(SHOP.averageOrderValue * (1 + 0.25 * normal(rand))),
+      });
+    }
   });
-  return out;
+  return orders;
 }
