@@ -98,7 +98,7 @@ export default function AppLayout() {
         </div>
 
         {me.data?.shop && (
-          <div className="mx-2 mb-2 rounded-xl border border-black/20 px-3 py-2">
+          <div className="mx-2 mb-2 px-2">
             <p className="truncate text-sm font-semibold">{me.data.shop.name}</p>
             <p className="truncate text-xs text-black/50">
               {me.data.shop.city}

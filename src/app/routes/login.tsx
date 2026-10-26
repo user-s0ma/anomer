@@ -84,21 +84,19 @@ export default function Login() {
             </label>
             {siteKey && <Turnstile siteKey={siteKey} onSuccess={setToken} onExpire={() => setToken(null)} options={{ size: "flexible" }} />}
             {error && <p className="text-sm text-down">{error}</p>}
-            <div className="flex items-center justify-between gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(mode === "signIn" ? "signUp" : "signIn");
-                  setError(null);
-                }}
-                className="text-xs text-black/50 hover:text-black hover:underline"
-              >
-                {mode === "signIn" ? t("login.toCreate") : t("login.toSignIn")}
-              </button>
-              <button type="submit" className="button-secondary" disabled={busy}>
-                {busy ? t("common.loading") : mode === "signIn" ? t("login.submit") : t("login.create")}
-              </button>
-            </div>
+            <button type="submit" className="button-secondary w-full" disabled={busy}>
+              {busy ? t("common.loading") : mode === "signIn" ? t("login.submit") : t("login.create")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "signIn" ? "signUp" : "signIn");
+                setError(null);
+              }}
+              className="block text-xs text-black/50 hover:text-black hover:underline"
+            >
+              {mode === "signIn" ? t("login.toCreate") : t("login.toSignIn")}
+            </button>
           </form>
         </details>
       </div>

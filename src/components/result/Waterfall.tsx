@@ -12,7 +12,7 @@ export type WaterfallRow = {
 
 /**
  * 変化の内訳を横向きの滝グラフで見せる。前の値から始め、原因ごとの寄与を順に足して後の値に着く。
- * 前と後は縦の線、寄与は浮いた棒、幅はひげで表す
+ * 前と後は縦の線、寄与は浮いた棒、幅はひげで表す。前と後をほかで見せているときは showTotals を false にして行を省く
  */
 export function Waterfall({
   before,
@@ -21,6 +21,7 @@ export function Waterfall({
   unit,
   locale,
   labels,
+  showTotals = true,
 }: {
   before: number;
   after: number;
@@ -28,6 +29,7 @@ export function Waterfall({
   unit: string;
   locale: Locale;
   labels: { before: string; after: string };
+  showTotals?: boolean;
 }) {
   const bars = rows.map((row, i) => {
     const start = before + rows.slice(0, i).reduce((sum, r) => sum + r.value, 0);
@@ -45,7 +47,7 @@ export function Waterfall({
 
   const totalRow = (label: string, value: number) => (
     <div className={grid}>
-      <div className="truncate text-sm text-black/50">{label}</div>
+      <div className="line-clamp-2 text-sm text-black/50">{label}</div>
       <div className="relative h-6">
         <div className="absolute inset-y-0 w-0.5 rounded bg-black" style={{ left: x(value) }} />
       </div>
@@ -55,14 +57,14 @@ export function Waterfall({
 
   return (
     <div role="img" aria-label={`${labels.before} ${fmt(before)} → ${labels.after} ${fmt(after)}`}>
-      {totalRow(labels.before, before)}
+      {showTotals && totalRow(labels.before, before)}
       {bars.map((bar) => {
         const left = Math.min(bar.start, bar.end);
         const right = Math.max(bar.start, bar.end);
         const color = bar.kind === "unexplained" ? "bg-black/20" : bar.value >= 0 ? "bg-up" : "bg-down";
         return (
           <div key={bar.key} className={grid}>
-            <div className="truncate text-sm" title={bar.label}>
+            <div className="line-clamp-2 text-sm" title={bar.label}>
               {bar.label}
             </div>
             <div className="relative h-6">
@@ -87,7 +89,7 @@ export function Waterfall({
           </div>
         );
       })}
-      {totalRow(labels.after, after)}
+      {showTotals && totalRow(labels.after, after)}
     </div>
   );
 }

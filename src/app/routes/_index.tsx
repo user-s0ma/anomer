@@ -58,10 +58,7 @@ export default function Landing() {
 
         <figure className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_40px_80px_-32px_rgba(0,0,0,0.35)]">
           <p className="ml-auto w-fit rounded-3xl bg-black/10 px-4 py-2 text-sm">{t("landing.sample.question")}</p>
-          <p className="num mt-5 text-2xl font-semibold tracking-tight">
-            <span className="text-black/50">1,090 → </span>972 <span className="text-lg text-down">−118</span>
-          </p>
-          <div className="mt-4">
+          <div className="mt-5">
             <Waterfall
               before={SAMPLE.before}
               after={SAMPLE.after}
@@ -74,7 +71,7 @@ export default function Landing() {
               ]}
             />
           </div>
-          <figcaption className="mt-4 border-t border-black/10 pt-3 text-xs leading-5 text-black/50">{t("landing.sample.caption")}</figcaption>
+          <figcaption className="mt-4 text-xs leading-5 text-black/50">{t("landing.sample.caption")}</figcaption>
         </figure>
       </section>
 

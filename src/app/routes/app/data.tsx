@@ -36,14 +36,14 @@ export default function Data() {
       ) : (
         <div className="space-y-4">
           <p className="pl-2 text-sm text-black/50">
-            {t("data.lead")} {t("data.dataUntil", { date: formatDate(data.data.dates[data.data.dates.length - 1], locale) })}
+            {t("data.dataUntil", { date: formatDate(data.data.dates[data.data.dates.length - 1], locale) })}
           </p>
           {data.data.sources.map((source) => (
             <section key={source.id} className="panel">
               <div className="panel-header">
                 <h2 className="panel-title">
                   {source.label[locale]}
-                  <span className="ml-2 rounded-full border border-black/20 px-2 py-0.5 text-[11px] font-medium text-black/50">
+                  <span className="ml-2 text-xs font-normal text-black/50">
                     {source.kind === "live" ? t("data.live") : t("data.simulated")}
                   </span>
                 </h2>
@@ -69,9 +69,7 @@ export default function Data() {
               </ul>
             </section>
           ))}
-          <p className="pl-2 text-xs text-black/50">
-            {t("data.lastDays")} · {t("data.weatherNote")}
-          </p>
+          <p className="pl-2 text-xs text-black/50">{t("data.lastDays")}</p>
         </div>
       )}
     </PageBody>

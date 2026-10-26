@@ -49,10 +49,10 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
         <p className="mt-4 text-base leading-7">{explanation.summary}</p>
       </div>
 
+      {/* 内訳: 滝グラフの下に、同じパネルの中で原因ごとの説明を並べる。前と後の値は上の見出しにあるので滝グラフでは省く */}
       <section className="panel">
         <div className="panel-header">
           <h2 className="panel-title">{t("result.breakdown")}</h2>
-          <span className="text-xs text-black/50">{t("result.rangeNote")}</span>
         </div>
         <div className="px-5 py-3">
           <Waterfall
@@ -61,6 +61,7 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
             unit={unit}
             locale={locale}
             labels={{ before: formatPeriod(plan.baseline, locale), after: formatPeriod(plan.change, locale) }}
+            showTotals={false}
             rows={[
               ...result.groups.map((g) => ({
                 key: g.key,
@@ -72,36 +73,24 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
               { key: "unexplained", label: t("result.unexplained"), value: result.unexplained, kind: "unexplained" as const },
             ]}
           />
+          <p className="mt-1 text-xs text-black/50">{t("result.rangeNote")}</p>
         </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-header">
-          <h2 className="panel-title">{t("result.causes")}</h2>
-        </div>
-        <ul className="divide-y divide-black/20">
+        <ul className="divide-y divide-black/20 border-t border-black/20">
           {result.groups.map((group) => {
             const text = textOf.get(group.key);
             const noisy = Math.abs(group.contribution) <= group.margin;
             return (
               <li key={group.key} className="px-5 py-4">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs text-black/50">{groupLabel(group.key, locale, t)}</p>
-                    <h3 className="font-semibold">{text?.title}</h3>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className={`num font-semibold ${group.contribution >= 0 ? "text-up" : "text-down"}`}>{fmt(group.contribution, true)}</p>
-                    <p className="num text-xs text-black/50">
-                      ±{fmt(group.margin)}
-                      {noisy && ` · ${t("result.mayBeNoise")}`}
-                    </p>
-                  </div>
-                </div>
+                <h3 className="font-semibold">{text?.title}</h3>
                 <p className="mt-1.5 text-sm leading-6 text-black/70">{text?.explanation}</p>
+                {/* 原因の種類と「偶然かもしれない」は、くわしくの中に置く */}
                 <details className="mt-2 text-sm">
                   <summary className="cursor-pointer text-xs text-black/50 hover:text-black">{t("result.details")}</summary>
-                  <ul className="mt-2 space-y-1">
+                  <p className="mt-2 text-xs text-black/50">
+                    {groupLabel(group.key, locale, t)}
+                    {noisy && ` · ${t("result.mayBeNoise")}`}
+                  </p>
+                  <ul className="mt-1 space-y-1">
                     {group.columns.map((c, i) => (
                       <li key={i} className="flex justify-between gap-3 text-xs">
                         <span className="text-black/70">{columnLabel(c.column, locale, t)}</span>
@@ -116,37 +105,28 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
         </ul>
       </section>
 
-      <section className="panel">
-        <div className="panel-header">
-          <h2 className="panel-title">{t("result.chartTitle", { target: metricLabel(plan.target, locale) })}</h2>
-        </div>
-        <div className="px-5 py-4">
-          <SeriesChart
-            series={result.series}
-            change={plan.change}
-            baseline={plan.baseline}
-            unit={unit}
-            locale={locale}
-            labels={{ actual: t("result.actual"), fitted: t("result.fitted"), change: t("result.changePeriod"), baseline: t("result.baselinePeriod") }}
-          />
-        </div>
-      </section>
+      <div className="pt-2">
+        <h2 className="mb-2 text-sm font-semibold">{t("result.chartTitle", { target: metricLabel(plan.target, locale) })}</h2>
+        <SeriesChart
+          series={result.series}
+          change={plan.change}
+          baseline={plan.baseline}
+          unit={unit}
+          locale={locale}
+          labels={{ actual: t("result.actual"), fitted: t("result.fitted"), change: t("result.changePeriod"), baseline: t("result.baselinePeriod") }}
+        />
+      </div>
 
       {plan.excluded.length > 0 && (
-        <section className="panel">
-          <div className="panel-header">
-            <h2 className="panel-title">{t("result.excludedTitle")}</h2>
-          </div>
-          <p className="px-5 pt-3 text-xs text-black/50">{t("result.excludedNote", { target: metricLabel(plan.target, locale) })}</p>
-          <ul className="space-y-1.5 px-5 py-3 text-sm">
-            {plan.excluded.map((e) => (
-              <li key={e.metric}>
-                <span className="font-medium">{metricLabel(e.metric, locale)}</span>
-                <span className="text-black/50"> — {e.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <p className="text-xs leading-5 text-black/50">
+          {t("result.excludedTitle")}:{" "}
+          {plan.excluded.map((e, i) => (
+            <span key={e.metric}>
+              {i > 0 && "; "}
+              {metricLabel(e.metric, locale)} — {e.reason}
+            </span>
+          ))}
+        </p>
       )}
 
       {result.unavailable.length > 0 && (
