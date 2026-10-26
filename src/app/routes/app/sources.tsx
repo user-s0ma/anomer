@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Camera, Check, CloudSun, Megaphone, Plus, Search, ShoppingBag, Trash2, type LucideIcon } from "lucide-react";
@@ -30,19 +30,100 @@ function SourceIcon({ icon }: { icon: SourceDefinition["icon"] }) {
   );
 }
 
-function Sparkline({ values }: { values: (number | null)[] }) {
+/** 数字1つの直近の日別の値。指した日の値を見出しの右に出す (指していないときは最後の値) */
+function MetricChart({
+  label,
+  unit,
+  dates,
+  values,
+  locale,
+}: {
+  label: string;
+  unit: string;
+  dates: string[];
+  values: (number | null)[];
+  locale: Locale;
+}) {
+  const gradientId = useId();
+  const [hover, setHover] = useState<number | null>(null);
   const points = values.map((v, i) => [i, v] as const).filter((p): p is readonly [number, number] => p[1] !== null);
-  if (points.length < 2) return null;
+  const lastIndex = points.length > 0 ? points[points.length - 1][0] : null;
+  const shownIndex = hover !== null && values[hover] !== null ? hover : lastIndex;
+
+  const W = 300;
+  const H = 72;
   const ys = points.map((p) => p[1]);
-  const lo = Math.min(...ys);
-  const hi = Math.max(...ys);
-  const d = points
-    .map(([i, v], k) => `${k === 0 ? "M" : "L"}${((i / (values.length - 1)) * 100).toFixed(2)},${(28 - ((v - lo) / (hi - lo || 1)) * 26).toFixed(2)}`)
-    .join("");
+  const lo = Math.min(0, ...ys);
+  const hi = Math.max(...ys) || 1;
+  const x = (i: number) => (i / (values.length - 1)) * W;
+  const y = (v: number) => 4 + (1 - (v - lo) / (hi - lo)) * (H - 4);
+  const line = points.map(([i, v], k) => `${k === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const area = points.length > 1 ? `${line}L${x(points[points.length - 1][0]).toFixed(1)},${H}L${x(points[0][0]).toFixed(1)},${H}Z` : "";
+  const bars = unit === "posts";
+  const barWidth = (W / values.length) * 0.6;
+
   return (
-    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="h-8 w-full" aria-hidden>
-      <path d={d} fill="none" className="stroke-accent" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="truncate text-sm font-medium">{label}</span>
+        {shownIndex !== null && (
+          <span className="shrink-0 text-sm">
+            <span className="mr-1.5 text-xs text-black/50">{formatDate(dates[shownIndex], locale)}</span>
+            <span className="num font-semibold">{formatValue(values[shownIndex]!, unit, locale)}</span>
+          </span>
+        )}
+      </div>
+      {points.length > 1 && (
+        <div className="relative mt-1.5">
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio="none"
+            className="block h-16 w-full touch-none"
+            aria-hidden
+            onPointerMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setHover(Math.max(0, Math.min(values.length - 1, Math.round(((e.clientX - rect.left) / rect.width) * (values.length - 1)))));
+            }}
+            onPointerLeave={() => setHover(null)}
+          >
+            <defs>
+              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" style={{ stopColor: "var(--color-accent)" }} stopOpacity={0.35} />
+                <stop offset="100%" style={{ stopColor: "var(--color-accent)" }} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <line x1={0} x2={W} y1={H - 0.5} y2={H - 0.5} className="stroke-black/10" vectorEffect="non-scaling-stroke" />
+            {bars ? (
+              // 投稿の数のような小さな数は、日ごとの棒にする
+              points.map(([i, v]) => (
+                <rect
+                  key={i}
+                  x={x(i) - barWidth / 2}
+                  y={y(v)}
+                  width={barWidth}
+                  height={H - y(v)}
+                  className={i === shownIndex && hover !== null ? "fill-accent" : "fill-accent/60"}
+                />
+              ))
+            ) : (
+              <>
+                <path d={area} fill={`url(#${gradientId})`} />
+                <path d={line} fill="none" className="stroke-accent" strokeWidth={1.5} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+              </>
+            )}
+            {hover !== null && shownIndex !== null && (
+              <line x1={x(shownIndex)} x2={x(shownIndex)} y1={0} y2={H} className="stroke-black/30" vectorEffect="non-scaling-stroke" />
+            )}
+          </svg>
+          {!bars && shownIndex !== null && (
+            <span
+              className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent ring-2 ring-white"
+              style={{ left: `${(x(shownIndex) / W) * 100}%`, top: `${(y(values[shownIndex]!) / H) * 100}%` }}
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -96,9 +177,7 @@ export default function Sources() {
         </label>
       }
     >
-      {sources.isPending ? (
-        <p className="pl-2 text-sm text-black/50">{t("common.loading")}</p>
-      ) : sources.isError ? (
+      {sources.isPending ? null : sources.isError ? (
         <p className="pl-2 text-sm text-down">{t("common.error")}</p>
       ) : (
         <section className="space-y-6">
@@ -219,6 +298,7 @@ function SourceDetail({
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
   const metrics = data?.sources.find((s) => s.id === source.id)?.metrics ?? [];
+  const dates = data?.dates.slice(-DAYS) ?? [];
   return (
     <Modal title={source.label[locale]} size="3xl" onClose={onClose}>
       <div className="space-y-5 px-6 pb-6">
@@ -232,15 +312,9 @@ function SourceDetail({
         </dl>
         <ul className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
           {metrics.map((m) => {
-            const recent = m.values.slice(-DAYS);
-            const last = [...recent].reverse().find((v) => v !== null);
             return (
               <li key={m.key} className="min-w-0">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-sm font-medium">{m.label[locale]}</span>
-                  {last !== undefined && last !== null && <span className="num text-sm text-black/50">{formatValue(last, m.unit, locale)}</span>}
-                </div>
-                <Sparkline values={recent} />
+                <MetricChart label={m.label[locale]} unit={m.unit} dates={dates} values={m.values.slice(-DAYS)} locale={locale} />
                 {m.latencyDays > 0 && <p className="text-xs text-black/50">{t("sources.latency", { count: m.latencyDays })}</p>}
               </li>
             );

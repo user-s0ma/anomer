@@ -205,7 +205,9 @@ export function investigate(input: InvestigationInput): InvestigationResult {
     groups.set(key, group);
   });
 
-  const breakdown: BreakdownGroup[] = [...groups.entries()].map(([key, group]) => {
+  // 2つの期間で値が変わらない列だけのまとまり (同じ曜日の並びなど) は、差に効きようがないので出さない
+  const moved = [...groups.entries()].filter(([, group]) => group.delta.some((d) => d !== 0));
+  const breakdown: BreakdownGroup[] = moved.map(([key, group]) => {
     const contribution = group.indices.reduce((s, k, i) => s + beta[k] * group.delta[i], 0);
     let variance = 0;
     group.indices.forEach((a, i) =>

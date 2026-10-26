@@ -27,6 +27,10 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
   const unit = target.unit;
   const fmt = (v: number, signed = false) => formatValue(v, unit, locale, { signed });
   const textOf = new Map(explanation.groups.map((g) => [g.key, g]));
+  // 説明を並べるのは主な原因だけ。偶然の幅に収まらず、原因の動きの合計の1割以上を占めるもの
+  const totalMoved = result.groups.reduce((sum, g) => sum + Math.abs(g.contribution), 0);
+  const isMain = (g: (typeof result.groups)[number]) => Math.abs(g.contribution) > g.margin && Math.abs(g.contribution) >= totalMoved * 0.1;
+  const main = result.groups.some(isMain) ? result.groups.filter(isMain) : result.groups;
 
   return (
     <article className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -74,7 +78,7 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
             ]}
           />        </div>
         <ul className="divide-y divide-black/20 border-t border-black/20">
-          {result.groups.map((group) => {
+          {main.map((group) => {
             const text = textOf.get(group.key);
             const noisy = Math.abs(group.contribution) <= group.margin;
             return (
@@ -111,21 +115,10 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
           baseline={plan.baseline}
           unit={unit}
           locale={locale}
-          labels={{ actual: t("result.actual"), fitted: t("result.fitted"), change: t("result.changePeriod"), baseline: t("result.baselinePeriod") }}
+          labels={{ actual: t("result.actual"), fitted: t("result.fitted"), change: t("result.changePeriod"), baseline: t("result.baselinePeriod"), average: t("result.periodAverage") }}
         />
       </div>
 
-      {plan.excluded.length > 0 && (
-        <p className="text-xs leading-5 text-black/50">
-          {t("result.excludedTitle")}:{" "}
-          {plan.excluded.map((e, i) => (
-            <span key={e.metric}>
-              {i > 0 && "; "}
-              {metricLabel(e.metric, locale)} — {e.reason}
-            </span>
-          ))}
-        </p>
-      )}
 
       {result.unavailable.length > 0 && (
         <p className="text-xs text-black/50">
@@ -146,6 +139,18 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
             r2: result.fit.rSquared.toFixed(2),
           })}
         </p>
+        {plan.excluded.length > 0 && (
+          <>
+            <p className="mt-3">{t("result.excludedTitle")}</p>
+            <ul className="mt-1 space-y-1 text-xs leading-5">
+              {plan.excluded.map((e) => (
+                <li key={e.metric}>
+                  {metricLabel(e.metric, locale)} — {e.reason}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </details>
     </article>
   );

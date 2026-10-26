@@ -86,6 +86,6 @@ export function suggestedQuestions(connections: Connection[], locale: Locale) {
     questions.push(locale === "ja" ? `${day(instagram.viralReel)}に注文が跳ねたのはなぜ？` : `Why did orders jump on ${day(instagram.viralReel)}?`);
   }
   questions.push(locale === "ja" ? "先週の売上が変わったのはなぜ？" : "Why did revenue change last week?");
-  if (instagram) questions.push(locale === "ja" ? "先月、ウェブサイトのタップが増えたのはなぜ？" : "Why did website taps rise last month?");
+  if (instagram) questions.push(locale === "ja" ? "先月、Instagram のリーチが増えたのはなぜ？" : "Why did Instagram reach rise last month?");
   return questions;
 }

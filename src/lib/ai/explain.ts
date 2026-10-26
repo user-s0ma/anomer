@@ -71,12 +71,12 @@ export function describeResult(plan: QuestionPlan, result: InvestigationResult) 
 export async function explain(env: AppEnv, input: { plan: QuestionPlan; result: InvestigationResult; question: string; locale: Locale; shopName: string }) {
   const keys = input.result.groups.map((g) => g.key) as [string, ...string[]];
   const schema = z.object({
-    summary: z.string().describe("Two or three sentences that answer the owner's question"),
+    summary: z.string().describe("One or two short sentences that answer the owner's question"),
     groups: z.array(
       z.object({
         key: keys.length > 0 ? z.enum(keys) : z.string(),
         title: z.string().describe("A short name for this cause, e.g. 'Ads were paused' or 'Rainy days'"),
-        explanation: z.string().describe("One or two sentences"),
+        explanation: z.string().describe("One short sentence"),
       }),
     ),
   });
@@ -98,6 +98,7 @@ Rules:
 - Similar numbers inside one data source (such as views and reach) can split or cancel each other's contribution; describe the source as a whole.
 - If a part's range includes zero, say it may be noise.
 - A day-of-month part is a recurring monthly pattern. You may suggest what it could be (such as paydays) but say it is a guess.
+- Be brief. The page already shows the before and after values, the total change, and each part's contribution next to its bar. Do not repeat those numbers. The summary names the main cause; each part's explanation says what moved in the data.
 - Write for a shop owner, not a statistician. Write in ${LANGUAGE[input.locale]}.
 - Return one entry in groups for every part, using its key.`,
       },

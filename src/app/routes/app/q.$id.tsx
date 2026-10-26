@@ -13,9 +13,7 @@ export default function InvestigationPage() {
   return (
     <PageBody>
       <div className="pt-12">
-        {list.isPending ? (
-          <p className="text-sm text-black/50">{t("common.loading")}</p>
-        ) : item ? (
+        {list.isPending ? null : item ? (
           <InvestigationDetail investigation={item} />
         ) : (
           <p className="text-sm text-black/50">{t("notFound")}</p>

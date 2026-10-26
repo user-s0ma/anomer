@@ -1,19 +1,52 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Link, Outlet, redirect, useLocation, useNavigate } from "react-router";
+import { Link, Outlet, redirect, useLoaderData, useLocation, useNavigate } from "react-router";
 import { LoaderCircle, LogOut, PanelLeft, Plug, SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import type { Route } from "./+types/_layout";
 import { LanguageSwitcher, Logo } from "@/components/ui";
-import { ApiError, ask, authClient, getMe, listInvestigations, type InvestigationStep } from "@/lib/api-client";
+import {
+  ApiError,
+  ask,
+  authClient,
+  getMe,
+  listInvestigations,
+  type DataResponse,
+  type getSources,
+  type InvestigationStep,
+  type InvestigationView,
+  type Me,
+} from "@/lib/api-client";
 import { getSession } from "@/lib/auth/server";
 import { appContext } from "@/lib/util/app-context";
+import api from "@/server/api";
 
+/**
+ * 画面を返す前に、サーバーで使う値を読んでおく (最初の表示から中身が出るように)。
+ * 店はここで初めて作られることがあるので、/api/me を先に読む
+ */
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { env } = context.get(appContext);
+  const { env, ctx } = context.get(appContext);
   if (!(await getSession(env, request))) throw redirect("/login");
-  return null;
+  const get = async <T,>(path: string): Promise<T | null> => {
+    const response = await api.fetch(new Request(new URL(path, request.url), { headers: request.headers }), env, ctx);
+    return response.ok ? ((await response.json()) as T) : null;
+  };
+  const me = await get<Me>("/api/me");
+  const [investigations, sources, data] = me?.shop
+    ? await Promise.all([
+        get<{ items: InvestigationView[] }>("/api/investigations"),
+        get<Awaited<ReturnType<typeof getSources>>>("/api/sources"),
+        get<DataResponse>("/api/data"),
+      ])
+    : [null, null, null];
+  return { me, investigations, sources, data };
+}
+
+/** 読み込んだあとは react-query が値を持つので、画面を移るたびには読み直さない */
+export function shouldRevalidate() {
+  return false;
 }
 
 export type Running = { question: string; step: InvestigationStep };
@@ -38,6 +71,13 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const preloaded = useLoaderData<typeof loader>();
+  // サーバーで読んだ値を、子の画面が使う前に入れておく
+  useState(() => {
+    for (const [key, value] of Object.entries(preloaded)) {
+      if (value !== null && queryClient.getQueryData([key]) === undefined) queryClient.setQueryData([key], value);
+    }
+  });
   const me = useMe();
   const list = useInvestigations();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -84,6 +124,7 @@ export default function AppLayout() {
           <Link to="/app" className="px-2" onClick={close}>
             <Logo className="text-lg" />
           </Link>
+          <LanguageSwitcher className="ml-auto" />
           <button
             className="flex size-10 items-center justify-center rounded-2xl text-black/50 hover:bg-black/10 hover:text-black"
             type="button"
@@ -96,16 +137,6 @@ export default function AppLayout() {
             <PanelLeft className="size-4" />
           </button>
         </div>
-
-        {me.data?.shop && (
-          <div className="mx-2 mb-2 px-2">
-            <p className="truncate text-sm font-semibold">{me.data.shop.name}</p>
-            <p className="truncate text-xs text-black/50">
-              {me.data.shop.city}
-              {me.data.user.demo && ` · ${t("app.demoBadge")}`}
-            </p>
-          </div>
-        )}
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-2">
           <Link to="/app" onClick={close} className={`nav-item ${path === "/app" ? "bg-accent/10 text-accent" : ""}`}>
@@ -139,13 +170,16 @@ export default function AppLayout() {
 
         <div className="m-2 flex items-center justify-between gap-2 rounded-xl p-2">
           <div className="flex min-w-0 items-center gap-2">
+            {/* アカウントと店は1対1なので、店の名前で出す (店を作る前は名前) */}
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-on-accent">
-              {(me.data?.user.name ?? "?").charAt(0).toUpperCase()}
+              {(me.data?.shop?.name ?? me.data?.user.name ?? "?").charAt(0).toUpperCase()}
             </span>
-            <span className="truncate text-sm">{me.data?.user.name}</span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm">{me.data?.shop?.name ?? me.data?.user.name}</span>
+              {me.data?.shop && <span className="block truncate text-xs text-black/50">{me.data.shop.city}</span>}
+            </span>
           </div>
           <div className="flex items-center">
-            <LanguageSwitcher />
             <button
               type="button"
               onClick={signOut}
@@ -160,9 +194,7 @@ export default function AppLayout() {
       </aside>
 
       <div className={`min-h-dvh ${sidebarOpen ? "lg:pl-64" : ""}`}>
-        {me.isPending ? (
-          <p className="p-6 text-sm text-black/50">{t("common.loading")}</p>
-        ) : me.isError ? (
+        {me.isPending ? null : me.isError ? (
           <p className="p-6 text-sm text-down">{t("common.error")}</p>
         ) : (
           <Outlet

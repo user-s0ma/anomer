@@ -59,7 +59,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function Root() {
-  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } }));
+  const [queryClient] = useState(() => // サーバーで読んだ値をすぐに読み直さないよう、30秒は新しいものとみなす
+    new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000 } } }));
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />

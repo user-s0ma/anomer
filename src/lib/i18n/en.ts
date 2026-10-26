@@ -52,7 +52,6 @@ const en = {
     ownAccount: "Use your own account",
   },
   app: {
-    demoBadge: "Demo",
     demoNote: "Questions you ask here are visible to everyone using the demo.",
     nav: { ask: "Ask", sources: "Data sources" },
     askPlaceholder: "Why did orders drop last week?",
@@ -87,8 +86,9 @@ const en = {
     chartTitle: "{{target}} per day",
     actual: "Actual",
     fitted: "Model",
-    changePeriod: "Change",
-    baselinePeriod: "Baseline",
+    changePeriod: "Change period",
+    periodAverage: "Daily average",
+    baselinePeriod: "Compared with",
     method: "Method",
     methodBody:
       "{{first}} to {{last}}, {{rows}} days, {{columns}} columns. Lasso with {{folds}}-fold time-ordered cross-validation kept {{selected}}, refit by least squares. R² {{r2}}.",
