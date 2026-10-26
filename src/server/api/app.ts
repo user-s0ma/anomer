@@ -43,7 +43,7 @@ function suggestions(events: SimulationEvents, locale: Locale) {
   const viral = day(events.viralReel);
   return locale === "ja"
     ? [`${from}〜${to}の注文が減ったのはなぜ？`, `${viral}に注文が跳ねたのはなぜ？`, "先週の売上が変わったのはなぜ？", "先月、ウェブサイトのタップが増えたのはなぜ？"]
-    : [`Why were orders lower from ${from} to ${to}?`, `Why did orders jump on ${viral}?`, "Why did revenue change last week?", "What drove website taps last month?"];
+    : [`Why did orders drop ${from}–${to}?`, `Why did orders jump on ${viral}?`, "Why did revenue change last week?", "Why did website taps rise last month?"];
 }
 
 app.get("/me", async (c) => {

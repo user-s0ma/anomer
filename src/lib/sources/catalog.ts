@@ -29,10 +29,10 @@ export type SourceDefinition = {
 };
 
 export const SOURCES: SourceDefinition[] = [
-  { id: "orders", label: { en: "Orders", ja: "注文" }, kind: "simulated", modeledOn: "Daily order totals from the shop's checkout" },
-  { id: "meta_ads", label: { en: "Meta ads", ja: "Meta の広告" }, kind: "simulated", modeledOn: "Meta Marketing API (Insights)" },
-  { id: "instagram", label: { en: "Instagram", ja: "Instagram" }, kind: "simulated", modeledOn: "Instagram Graph API (insights)" },
-  { id: "weather", label: { en: "Weather", ja: "天気" }, kind: "live", modeledOn: "NOAA NCEI daily summaries (GHCN-Daily)" },
+  { id: "orders", label: { en: "Orders", ja: "注文" }, kind: "simulated", modeledOn: "Shop checkout" },
+  { id: "meta_ads", label: { en: "Meta ads", ja: "Meta の広告" }, kind: "simulated", modeledOn: "Meta Marketing API" },
+  { id: "instagram", label: { en: "Instagram", ja: "Instagram" }, kind: "simulated", modeledOn: "Instagram Graph API" },
+  { id: "weather", label: { en: "Weather", ja: "天気" }, kind: "live", modeledOn: "NOAA GHCN-Daily" },
 ];
 
 const metric = (
