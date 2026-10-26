@@ -108,11 +108,11 @@ export default function AppLayout() {
         )}
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-2">
-          <Link to="/app" onClick={close} className={`nav-item ${path === "/app" ? "bg-black/10" : ""}`}>
+          <Link to="/app" onClick={close} className={`nav-item ${path === "/app" ? "bg-accent/10 text-accent" : ""}`}>
             <SquarePen className="size-4" />
             {t("app.nav.ask")}
           </Link>
-          <Link to="/app/data" onClick={close} className={`nav-item ${path === "/app/data" ? "bg-black/10" : ""}`}>
+          <Link to="/app/data" onClick={close} className={`nav-item ${path === "/app/data" ? "bg-accent/10 text-accent" : ""}`}>
             <Database className="size-4" />
             {t("app.nav.data")}
           </Link>
@@ -130,7 +130,7 @@ export default function AppLayout() {
               to={`/app/q/${item.id}`}
               onClick={close}
               title={item.question}
-              className={`nav-item ${path === `/app/q/${item.id}` ? "bg-black/10" : ""} ${item.status === "failed" ? "text-black/50" : ""}`}
+              className={`nav-item ${path === `/app/q/${item.id}` ? "bg-accent/10 text-accent" : ""} ${item.status === "failed" ? "text-black/50" : ""}`}
             >
               <span className="truncate">{item.question}</span>
             </Link>
@@ -139,7 +139,7 @@ export default function AppLayout() {
 
         <div className="m-2 flex items-center justify-between gap-2 rounded-xl p-2">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-black text-xs font-semibold text-white">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-on-accent">
               {(me.data?.user.name ?? "?").charAt(0).toUpperCase()}
             </span>
             <span className="truncate text-sm">{me.data?.user.name}</span>

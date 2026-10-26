@@ -13,8 +13,8 @@ export function Logo({ className = "" }: { className?: string }) {
       <svg viewBox="0 0 20 16" className="h-4" aria-hidden>
         <rect x="0" y="9" width="4" height="7" rx="1" className="fill-black/50" />
         <rect x="5.5" y="5" width="4" height="11" rx="1" className="fill-black/50" />
-        <rect x="11" y="0" width="4" height="7" rx="1" className="fill-black" />
-        <rect x="16.5" y="3" width="3.5" height="13" rx="1" className="fill-black" />
+        <rect x="11" y="0" width="4" height="7" rx="1" className="fill-accent" />
+        <rect x="16.5" y="3" width="3.5" height="13" rx="1" className="fill-accent" />
       </svg>
       Anomer
     </span>
@@ -66,7 +66,7 @@ export function DemoButton({ size = "large" }: { size?: "large" | "small" }) {
     <div className="flex flex-col gap-2">
       <button
         type="button"
-        className={size === "large" ? "button-large bg-black text-white hover:bg-black/80" : "button-primary"}
+        className={size === "large" ? "button-large bg-accent text-on-accent hover:bg-accent/85" : "button-primary"}
         onClick={start}
         disabled={(!!siteKey && !token) || busy}
       >

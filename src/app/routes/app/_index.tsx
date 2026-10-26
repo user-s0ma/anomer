@@ -43,7 +43,7 @@ function Composer({ disabled, onSubmit }: { disabled: boolean; onSubmit: (text: 
         type="submit"
         disabled={disabled || text.trim().length < 3}
         aria-label={t("app.ask")}
-        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-black text-white transition-opacity hover:opacity-70 disabled:bg-black/10 disabled:text-black/50"
+        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent transition-opacity hover:opacity-85 disabled:bg-black/10 disabled:text-black/50"
       >
         {disabled ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
       </button>
