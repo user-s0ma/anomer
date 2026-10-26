@@ -8,7 +8,6 @@ import { fetchWeather } from "../weather";
 export const weatherPlugin: DataSourcePlugin<{ cityId: string }> = {
   definition: WEATHER,
   config: z.object({ cityId: z.string().refine((id) => CITY_BY_ID.has(id), "unknown city") }),
-  dependsOn: [],
   async fetch({ config, dates }) {
     const city = CITY_BY_ID.get(config.cityId)!;
     const days = await fetchWeather(city.station, dates[0], dates[dates.length - 1]);

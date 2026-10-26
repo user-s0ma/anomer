@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "../db/client";
 import { series, shop, shopSource } from "../db/schema";
 import { SOURCE_BY_ID } from "../sources/definitions";
-import { collect, type Connection } from "../sources/registry";
+import { collect, PLUGIN_BY_ID, type Connection } from "../sources/registry";
 import type { DailyValues, SourceDefinition } from "../sources/types";
 import { addDays, dateRange, todayIn } from "../util/dates";
 
@@ -20,6 +20,51 @@ export async function getShop(env: AppEnv, userId: string) {
 export async function listConnections(env: AppEnv, userId: string): Promise<Connection[]> {
   const rows = await getDb(env).select().from(shopSource).where(eq(shopSource.userId, userId));
   return rows.map((row) => ({ sourceId: row.sourceId, config: JSON.parse(row.config) as unknown }));
+}
+
+/** 店の人に見せる失敗 (つなげない理由など) */
+export class SourceError extends Error {}
+
+/**
+ * データ源を1つつなぐ。値を作るのに要るデータ源が先につながっていないとつなげない。
+ * seed の項目は乱数で決める。つないだら、次に調べるときに値をそろえ直す
+ */
+export async function connectSource(env: AppEnv, userId: string, sourceId: string, settings: Record<string, unknown>) {
+  const plugin = PLUGIN_BY_ID.get(sourceId);
+  if (!plugin) throw new SourceError("Unknown data source.");
+  const connected = new Set((await listConnections(env, userId)).map((c) => c.sourceId));
+  if (connected.has(sourceId)) throw new SourceError("This data source is already connected.");
+  const missing = plugin.definition.dependsOn.filter((id) => !connected.has(id));
+  if (missing.length > 0) throw new SourceError(`Connect ${missing.map((id) => SOURCE_BY_ID.get(id)!.label.en).join(", ")} first.`);
+
+  const config: Record<string, unknown> = { ...settings };
+  for (const field of plugin.definition.settings) {
+    if (field.type === "seed") config[field.key] = crypto.getRandomValues(new Uint32Array(1))[0] >>> 1;
+  }
+  const parsed = plugin.config.safeParse(config);
+  if (!parsed.success) throw new SourceError("Please check the settings.");
+  const db = getDb(env);
+  await db.batch([
+    db.insert(shopSource).values({ userId, sourceId, config: JSON.stringify(parsed.data) }),
+    db.update(shop).set({ syncedAt: null }).where(eq(shop.userId, userId)),
+  ]);
+}
+
+/** データ源を外す。ほかのつないだデータ源が値を使っているものは外せない。外したデータ源の値も消す */
+export async function disconnectSource(env: AppEnv, userId: string, sourceId: string) {
+  const connections = await listConnections(env, userId);
+  if (!connections.some((c) => c.sourceId === sourceId)) throw new SourceError("This data source is not connected.");
+  const users = connections.filter((c) => SOURCE_BY_ID.get(c.sourceId)?.dependsOn.includes(sourceId));
+  if (users.length > 0) {
+    throw new SourceError(`${users.map((c) => SOURCE_BY_ID.get(c.sourceId)!.label.en).join(", ")} uses this data source. Remove it first.`);
+  }
+  if (connections.length === 1) throw new SourceError("Keep at least one data source.");
+  const db = getDb(env);
+  await db.batch([
+    db.delete(shopSource).where(and(eq(shopSource.userId, userId), eq(shopSource.sourceId, sourceId))),
+    db.delete(series).where(and(eq(series.userId, userId), eq(series.sourceId, sourceId))),
+    db.update(shop).set({ syncedAt: null }).where(eq(shop.userId, userId)),
+  ]);
 }
 
 /** 店を作り、データ源をつなぐ */

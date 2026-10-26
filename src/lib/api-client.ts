@@ -57,6 +57,16 @@ export type DataResponse = {
 
 export const getData = () => request<DataResponse>("/api/data");
 
+export type Connection = { sourceId: string; config: Record<string, unknown> };
+
+export const getSources = () => request<{ available: SourceDefinition[]; connected: Connection[] }>("/api/sources");
+
+export const connectSource = (sourceId: string, settings: Record<string, unknown>) =>
+  request<{ ok: true }>("/api/sources", { method: "POST", body: JSON.stringify({ sourceId, settings }) });
+
+export const disconnectSource = (sourceId: string) =>
+  request<{ ok: true }>(`/api/sources/${encodeURIComponent(sourceId)}`, { method: "DELETE" });
+
 export type { InvestigationStep, InvestigationView };
 
 export const listInvestigations = () => request<{ items: InvestigationView[] }>("/api/investigations");

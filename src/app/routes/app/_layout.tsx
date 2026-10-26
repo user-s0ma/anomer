@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, redirect, useLocation, useNavigate } from "react-router";
-import { Database, LoaderCircle, LogOut, PanelLeft, SquarePen } from "lucide-react";
+import { LoaderCircle, LogOut, PanelLeft, Plug, SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import type { Route } from "./+types/_layout";
 import { LanguageSwitcher, Logo } from "@/components/ui";
@@ -112,9 +112,9 @@ export default function AppLayout() {
             <SquarePen className="size-4" />
             {t("app.nav.ask")}
           </Link>
-          <Link to="/app/data" onClick={close} className={`nav-item ${path === "/app/data" ? "bg-accent/10 text-accent" : ""}`}>
-            <Database className="size-4" />
-            {t("app.nav.data")}
+          <Link to="/app/sources" onClick={close} className={`nav-item ${path === "/app/sources" ? "bg-accent/10 text-accent" : ""}`}>
+            <Plug className="size-4" />
+            {t("app.nav.sources")}
           </Link>
 
           {(running || items.length > 0) && <p className="px-2 pt-4 pb-1 text-xs font-semibold">{t("app.history")}</p>}

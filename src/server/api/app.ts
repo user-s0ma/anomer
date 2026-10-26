@@ -10,7 +10,8 @@ import {
   listInvestigations,
   runInvestigation,
 } from "@/lib/investigations/service";
-import { getShop, listConnections, loadSeries } from "@/lib/shop/service";
+import { connectSource, disconnectSource, getShop, listConnections, loadSeries, SourceError, syncShopData } from "@/lib/shop/service";
+import { SOURCES } from "@/lib/sources/definitions";
 import { createStarterShop, DEMO_SHOP, suggestedQuestions } from "@/lib/shop/setup";
 import { CITIES, CITY_BY_ID } from "@/lib/sources/cities";
 import type { ApiEnv } from "./types";
@@ -60,10 +61,48 @@ app.post("/shop", async (c) => {
   return c.json({ ok: true });
 });
 
+/** 使えるデータ源と、店がつないだデータ源 (設定つき) */
+app.get("/sources", async (c) => {
+  const shop = await shopFor(c.env, c.get("user"));
+  if (!shop) return c.json({ message: "Create your shop first." }, 404);
+  const connections = await listConnections(c.env, shop.userId);
+  return c.json({ available: SOURCES, connected: connections });
+});
+
+app.post("/sources", async (c) => {
+  const user = c.get("user");
+  if (isDemoUser(user)) return c.json({ message: "The demo account cannot change data sources." }, 403);
+  const body = z
+    .object({ sourceId: z.string().min(1).max(64), settings: z.record(z.string(), z.unknown()) })
+    .safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json({ message: "Please check the settings." }, 400);
+  try {
+    await connectSource(c.env, user.id, body.data.sourceId, body.data.settings);
+  } catch (error) {
+    if (error instanceof SourceError) return c.json({ message: error.message }, 400);
+    throw error;
+  }
+  return c.json({ ok: true });
+});
+
+app.delete("/sources/:id", async (c) => {
+  const user = c.get("user");
+  if (isDemoUser(user)) return c.json({ message: "The demo account cannot change data sources." }, 403);
+  try {
+    await disconnectSource(c.env, user.id, c.req.param("id"));
+  } catch (error) {
+    if (error instanceof SourceError) return c.json({ message: error.message }, 400);
+    throw error;
+  }
+  return c.json({ ok: true });
+});
+
 /** つないだデータ源と、その数字の日別の値 (グラフ用) */
 app.get("/data", async (c) => {
   const shop = await shopFor(c.env, c.get("user"));
   if (!shop) return c.json({ message: "Create your shop first." }, 404);
+  // データ源をつないだり外したりした直後は、ここで値をそろえ直す
+  await syncShopData(c.env, shop);
   const { dates, values, sources } = await loadSeries(c.env, shop);
   return c.json({
     dates,

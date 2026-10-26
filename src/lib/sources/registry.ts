@@ -27,7 +27,7 @@ export async function collect(connections: Connection[], dates: string[]): Promi
     if (!plugin) throw new Error(`知らないデータ源です: ${id}`);
     if (!connection) throw new Error(`${id} を使うデータ源がありますが、つながっていません`);
     visiting.add(id);
-    for (const dependency of plugin.dependsOn) await run(dependency);
+    for (const dependency of plugin.definition.dependsOn) await run(dependency);
     const config = plugin.config.parse(connection.config);
     const result = await plugin.fetch({ config: config as never, dates, inputs: values });
     for (const metric of plugin.definition.metrics) {

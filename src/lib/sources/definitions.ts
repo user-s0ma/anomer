@@ -23,6 +23,9 @@ export const ORDERS: SourceDefinition = {
   label: { en: "Orders", ja: "注文" },
   kind: "simulated",
   modeledOn: "Shop checkout",
+  settings: [{ key: "seed", type: "seed", label: { en: "Seed", ja: "乱数の種" } }],
+  // 注文は、広告費・プロフィールへの訪問・本物の降水量で動く
+  dependsOn: ["meta_ads", "instagram", "weather"],
   metrics: [
     metric("orders", "Orders", "注文数", "orders", "sum", "Number of orders placed in the shop (online and in store) that day."),
     metric("revenue", "Revenue", "売上", "USD", "sum", "Total sales that day. Equals orders times average order value."),
@@ -44,6 +47,12 @@ export const META_ADS: SourceDefinition = {
   label: { en: "Meta ads", ja: "Meta の広告" },
   kind: "simulated",
   modeledOn: "Meta Marketing API",
+  settings: [
+    { key: "seed", type: "seed", label: { en: "Seed", ja: "乱数の種" } },
+    { key: "pausedFrom", type: "date", label: { en: "Ads paused from", ja: "広告を止めた日" } },
+    { key: "pausedTo", type: "date", label: { en: "Ads paused until", ja: "広告を止めた最後の日" } },
+  ],
+  dependsOn: [],
   metrics: [
     metric("ad_spend", "Ad spend", "広告費", "USD", "sum", "Amount spent on Meta (Facebook and Instagram) ads that day."),
     metric("ad_impressions", "Ad impressions", "広告の表示回数", "impressions", "sum", "Times the shop's Meta ads were shown that day."),
@@ -68,6 +77,11 @@ export const INSTAGRAM: SourceDefinition = {
   label: { en: "Instagram", ja: "Instagram" },
   kind: "simulated",
   modeledOn: "Instagram Graph API",
+  settings: [
+    { key: "seed", type: "seed", label: { en: "Seed", ja: "乱数の種" } },
+    { key: "viralReel", type: "date", label: { en: "Reel went viral on", ja: "リールが伸びた日" } },
+  ],
+  dependsOn: [],
   metrics: [
     metric("ig_followers", "Followers", "フォロワー数", "followers", "mean", "Instagram followers at the end of the day.", INSTAGRAM_LATENCY_DAYS),
     metric("ig_profile_visits", "Profile visits", "プロフィールへの訪問", "visits", "sum", "Visits to the shop's Instagram profile that day.", INSTAGRAM_LATENCY_DAYS),
@@ -88,6 +102,8 @@ export const WEATHER: SourceDefinition = {
   label: { en: "Weather", ja: "天気" },
   kind: "live",
   modeledOn: "NOAA GHCN-Daily",
+  settings: [{ key: "cityId", type: "city", label: { en: "City", ja: "都市" } }],
+  dependsOn: [],
   metrics: [
     metric("temp_max", "High temperature", "最高気温", "°C", "mean", "Highest air temperature that day, measured at the city's main airport weather station."),
     metric("temp_min", "Low temperature", "最低気温", "°C", "mean", "Lowest air temperature that day, measured at the city's main airport weather station."),

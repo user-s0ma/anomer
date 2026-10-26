@@ -12,7 +12,6 @@ const date = z.iso.date();
 export const metaAdsSimulator: DataSourcePlugin<{ seed: number; pausedFrom: string; pausedTo: string }> = {
   definition: META_ADS,
   config: z.object({ seed: z.number().int(), pausedFrom: date, pausedTo: date }),
-  dependsOn: [],
   async fetch({ config, dates }) {
     return simulateAds(dates, config.seed, { start: config.pausedFrom, end: config.pausedTo });
   },
@@ -21,7 +20,6 @@ export const metaAdsSimulator: DataSourcePlugin<{ seed: number; pausedFrom: stri
 export const instagramSimulator: DataSourcePlugin<{ seed: number; viralReel: string }> = {
   definition: INSTAGRAM,
   config: z.object({ seed: z.number().int(), viralReel: date }),
-  dependsOn: [],
   async fetch({ config, dates }) {
     return simulateInstagram(dates, config.seed, config.viralReel);
   },
@@ -31,7 +29,6 @@ export const instagramSimulator: DataSourcePlugin<{ seed: number; viralReel: str
 export const ordersSimulator: DataSourcePlugin<{ seed: number }> = {
   definition: ORDERS,
   config: z.object({ seed: z.number().int() }),
-  dependsOn: ["meta_ads", "instagram", "weather"],
   async fetch({ config, dates, inputs }) {
     return simulateOrders(dates, config.seed, {
       adSpend: inputs.ad_spend,

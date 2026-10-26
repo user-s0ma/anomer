@@ -23,6 +23,12 @@ export type MetricDefinition = {
 /** どのデータ源のものかがわかる数字の説明 */
 export type SourcedMetric = MetricDefinition & { source: string };
 
+/**
+ * つなぐときに入れてもらう設定の項目。画面はこれを読んで入力の欄を作る。
+ * city = 店の都市を選ぶ、date = 日付、seed = 入れてもらわずに乱数で決める (シミュレーター用)
+ */
+export type SettingField = { key: string; type: "city" | "date" | "seed"; label: Label };
+
 /** 画面とサーバーの両方で読む、データ源の説明 */
 export type SourceDefinition = {
   id: string;
@@ -32,6 +38,9 @@ export type SourceDefinition = {
   /** 形を合わせた API */
   modeledOn: string;
   metrics: MetricDefinition[];
+  settings: SettingField[];
+  /** 値を作るのに要る、ほかのデータ源の id (先につないでおく) */
+  dependsOn: string[];
 };
 
 export type DailyValues = Record<string, (number | null)[]>;
@@ -41,8 +50,6 @@ export type DataSourcePlugin<Config = unknown> = {
   definition: SourceDefinition;
   /** 店ごとの設定 (どこの天気か、シミュレーターの seed など)。DB の JSON を確かめるのに使う */
   config: z.ZodType<Config>;
-  /** 値を作るのにほかのデータ源の値が要るときは、その id を並べる。本体が先に取って inputs に入れる */
-  dependsOn: string[];
   /**
    * dates (連続した日付、古い順) の日別の値を、definition.metrics のすべての数字について返す。
    * まだ届いていない日は null にする
