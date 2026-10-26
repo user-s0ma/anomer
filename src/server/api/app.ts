@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/server";
 import { localeFromRequest } from "@/lib/i18n/locale";
 import {
   consumeQuota,
+  deleteInvestigation,
   getInvestigation,
   listInvestigations,
   runInvestigation,
@@ -137,6 +138,11 @@ app.get("/investigations", async (c) => {
 app.get("/investigations/:id", async (c) => {
   const found = await getInvestigation(c.env, c.get("user").id, c.req.param("id"));
   return found ? c.json(found) : c.json({ message: "Not found." }, 404);
+});
+
+app.delete("/investigations/:id", async (c) => {
+  const deleted = await deleteInvestigation(c.env, c.get("user").id, c.req.param("id"));
+  return deleted ? c.json({ ok: true }) : c.json({ message: "Not found." }, 404);
 });
 
 async function visitorKey(env: AppEnv, request: Request) {

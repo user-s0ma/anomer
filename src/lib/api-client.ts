@@ -71,6 +71,9 @@ export type { InvestigationStep, InvestigationView };
 
 export const listInvestigations = () => request<{ items: InvestigationView[] }>("/api/investigations");
 
+export const deleteInvestigation = (id: string) =>
+  request<{ ok: true }>(`/api/investigations/${encodeURIComponent(id)}`, { method: "DELETE" });
+
 /** 質問して、進み具合を onStep で受け取りながら結果を待つ */
 export async function ask(question: string, onStep: (step: InvestigationStep, id: string) => void): Promise<InvestigationView> {
   const response = await fetch("/api/investigations", {

@@ -53,6 +53,15 @@ export async function getInvestigation(env: AppEnv, userId: string, id: string) 
   return row ? toView(row) : null;
 }
 
+/** 質問を1つ履歴から消す。消したら true */
+export async function deleteInvestigation(env: AppEnv, userId: string, id: string) {
+  const deleted = await getDb(env)
+    .delete(investigation)
+    .where(and(eq(investigation.userId, userId), eq(investigation.id, id)))
+    .returning({ id: investigation.id });
+  return deleted.length > 0;
+}
+
 /** 店の人に見せる失敗 (質問が読めないなど)。それ以外の失敗は中身を見せない */
 export class UserFacingError extends Error {}
 

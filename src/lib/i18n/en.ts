@@ -5,7 +5,9 @@ const en = {
     description: "Find out why your shop's numbers changed and how much each cause contributed.",
   },
   common: {
+    delete: "Delete",
     signIn: "Sign in",
+    openApp: "Open the app",
     signOut: "Sign out",
     tryDemo: "Try the demo",
     loading: "Loading…",
@@ -57,6 +59,7 @@ const en = {
     askPlaceholder: "Why did orders drop last week?",
     ask: "Ask",
     history: "Questions",
+    historyMenu: "Actions for this question",
     limit: "Daily limit reached. Try again tomorrow.",
     steps: {
       data: "Updating data",

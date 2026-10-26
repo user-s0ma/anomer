@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, redirect, useLoaderData, useLocation, useNavigate } from "react-router";
-import { LoaderCircle, LogOut, PanelLeft, Plug, SquarePen } from "lucide-react";
+import { LoaderCircle, LogOut, PanelLeft, Plug, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Route } from "./+types/_layout";
 import { LanguageSwitcher, Logo } from "@/components/ui";
+import { RowMenu } from "@/components/ui/RowMenu";
 import {
   ApiError,
   ask,
   authClient,
+  deleteInvestigation,
   getMe,
   listInvestigations,
   type DataResponse,
@@ -103,6 +105,15 @@ export default function AppLayout() {
       .finally(() => setRunning(null));
   };
 
+  const removeInvestigation = useMutation({
+    mutationFn: deleteInvestigation,
+    onSuccess: async (_result, id) => {
+      await queryClient.invalidateQueries({ queryKey: ["investigations"] });
+      if (location.pathname === `/app/q/${id}`) navigate("/app");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const signOut = async () => {
     await authClient.signOut();
     window.location.href = "/";
@@ -121,7 +132,7 @@ export default function AppLayout() {
         } ${sidebarOpen ? "lg:translate-x-0" : "lg:-translate-x-full"}`}
       >
         <div className="flex h-14 items-center justify-between px-2">
-          <Link to="/app" className="px-2" onClick={close}>
+          <Link to="/" className="px-2" onClick={close}>
             <Logo className="text-lg" />
           </Link>
           <LanguageSwitcher className="ml-auto" />
@@ -161,9 +172,16 @@ export default function AppLayout() {
               to={`/app/q/${item.id}`}
               onClick={close}
               title={item.question}
-              className={`nav-item ${path === `/app/q/${item.id}` ? "bg-accent/10 text-accent" : ""} ${item.status === "failed" ? "text-black/50" : ""}`}
+              className={`nav-item group ${path === `/app/q/${item.id}` ? "bg-accent/10 text-accent" : ""} ${item.status === "failed" ? "text-black/50" : ""}`}
             >
-              <span className="truncate">{item.question}</span>
+              <span className="flex-1 truncate">{item.question}</span>
+              <span className="hidden group-hover:flex">
+                <RowMenu
+                  ariaLabel={t("app.historyMenu")}
+                  disabled={removeInvestigation.isPending}
+                  items={[{ label: t("common.delete"), icon: Trash2, danger: true, onSelect: () => removeInvestigation.mutate(item.id) }]}
+                />
+              </span>
             </Link>
           ))}
         </nav>

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link, redirect } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/_index";
 import { DemoButton, LanguageSwitcher, Logo } from "@/components/ui";
 import { Waterfall } from "@/components/result/Waterfall";
@@ -8,8 +8,8 @@ import { appContext } from "@/lib/util/app-context";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(appContext);
-  if (await getSession(env, request)) throw redirect("/app");
-  return null;
+  // ログイン中でもトップは見られる。そのときは入口をアプリへのリンクにする
+  return { signedIn: (await getSession(env, request)) !== null };
 }
 
 /**
@@ -31,6 +31,7 @@ const SAMPLE = {
 export default function Landing() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
+  const { signedIn } = useLoaderData<typeof loader>();
 
   return (
     <div className="min-h-dvh bg-white font-sans text-black">
@@ -39,8 +40,8 @@ export default function Landing() {
           <Logo className="text-lg" />
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <Link to="/login" className="text-sm font-semibold text-black/50 transition-colors hover:text-accent">
-              {t("common.signIn")}
+            <Link to={signedIn ? "/app" : "/login"} className="text-sm font-semibold text-black/50 transition-colors hover:text-accent">
+              {signedIn ? t("common.openApp") : t("common.signIn")}
             </Link>
           </div>
         </div>
@@ -53,7 +54,13 @@ export default function Landing() {
           <h1 className="h-display text-4xl font-semibold sm:text-6xl">{t("landing.headline")}</h1>
           <p className="mt-8 max-w-xl text-base leading-relaxed text-black/50 sm:text-lg">{t("landing.lead")}</p>
           <div className="mt-10 max-w-sm">
-            <DemoButton />
+            {signedIn ? (
+              <Link to="/app" className="button-primary w-full">
+                {t("common.openApp")}
+              </Link>
+            ) : (
+              <DemoButton />
+            )}
           </div>
         </div>
 

@@ -7,7 +7,9 @@ const ja: Dictionary = {
     description: "店の数字が動いた理由と、それぞれの原因がどれだけ効いたかがわかります。",
   },
   common: {
+    delete: "削除",
     signIn: "ログイン",
+    openApp: "アプリを開く",
     signOut: "ログアウト",
     tryDemo: "デモを試す",
     loading: "読み込み中…",
@@ -59,6 +61,7 @@ const ja: Dictionary = {
     askPlaceholder: "先週、注文が落ちたのはなぜ？",
     ask: "聞く",
     history: "これまでの質問",
+    historyMenu: "この質問の操作",
     limit: "今日の上限に達しました。明日またお試しください。",
     steps: {
       data: "データを更新",
