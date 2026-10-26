@@ -1,0 +1,13 @@
+# 手元で動かすときの秘密の値。.dev.vars に写して埋める (git に入らない)。
+# 本番は `wrangler secret put <名前>` で入れる
+
+# 手元ではリンクを localhost に向ける (wrangler.jsonc の vars より優先される)
+VITE_PUBLIC_APP_URL=http://localhost:5190
+
+# --- Auth (better-auth: email/password)
+BETTER_AUTH_SECRET=replace-with-a-long-random-string
+# Leave empty to disable the captcha in local development (http:// only)
+TURNSTILE_SECRET_KEY=
+
+# --- Meta Model API (https://dev.meta.ai)
+META_MODEL_API_KEY=

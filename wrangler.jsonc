@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "anomer",
+  "main": "src/server/worker.ts",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // 公開先のドメインを決めるまでは workers.dev で動かす
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "VITE_PUBLIC_APP_URL": "https://anomer.example.workers.dev",
+    // Cloudflare Turnstile のサイトキー (下は常に通るテスト用の値。公開前に本物に替える)
+    "VITE_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    "META_MODEL_API_BASE": "https://api.meta.ai/v1",
+    "META_MODEL": "muse-spark-1.3",
+    // AI を使う調査の1日の上限 (全体、お試しのブラウザごと、登録した人ごと)
+    "DAILY_INVESTIGATIONS_TOTAL": "400",
+    "DAILY_INVESTIGATIONS_PER_DEMO_VISITOR": "8",
+    "DAILY_INVESTIGATIONS_PER_USER": "20"
+  },
+  // `npx wrangler d1 create anomer --location apac` で作った DB
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "anomer",
+      "database_id": "3d895f53-a13c-4f9e-918d-1119c873c478",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "build/client"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

@@ -1,62 +1,39 @@
 /**
- * 店の場所の、日別の本物の天気 (Open-Meteo)。
- * 確定した値は過去の天気の API (ERA5、数日遅れで届く) から取り、まだ届いていない直近の日は、
- * 予報の API が返す過去の日の値で埋める。どちらもキーは要らない (非商用の利用)
+ * 店の場所の、日別の本物の天気。米国海洋大気庁 (NOAA) の国立環境情報センター (NCEI) が公開する
+ * GHCN-Daily (Global Historical Climatology Network daily) を、キーの要らない Access Data Service から取る。
+ * 米国政府の著作物なので、使う権利に制約はない。観測所から数日遅れで届き、まだ届いていない日は返らない
  */
 
-const ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive";
-const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
-const DAILY = ["temperature_2m_max", "temperature_2m_min", "precipitation_sum", "sunshine_duration"] as const;
+const NCEI_URL = "https://www.ncei.noaa.gov/access/services/data/v1";
 
 export type WeatherDay = {
   date: string;
+  /** °C */
   tempMax: number | null;
   tempMin: number | null;
+  /** mm */
   precipitation: number | null;
-  /** 時間 (API は秒で返す) */
-  sunshine: number | null;
 };
 
-type DailyResponse = {
-  daily: { time: string[] } & Record<(typeof DAILY)[number], (number | null)[]>;
-};
+type Record = { DATE: string; TMAX?: string; TMIN?: string; PRCP?: string };
 
-export type Location = { latitude: number; longitude: number; timezone: string };
+const numberOrNull = (value: string | undefined) => (value === undefined || value.trim() === "" ? null : Number(value));
 
-async function fetchDaily(url: string, location: Location, start: string, end: string): Promise<WeatherDay[]> {
+/** start〜end (どちらも含む) の、観測所の日別の天気。観測が届いている日だけを日付の順に返す */
+export async function fetchWeather(station: string, start: string, end: string): Promise<WeatherDay[]> {
   const params = new URLSearchParams({
-    latitude: String(location.latitude),
-    longitude: String(location.longitude),
-    start_date: start,
-    end_date: end,
-    daily: DAILY.join(","),
-    timezone: location.timezone,
+    dataset: "daily-summaries",
+    stations: station,
+    startDate: start,
+    endDate: end,
+    dataTypes: "TMAX,TMIN,PRCP",
+    units: "metric",
+    format: "json",
   });
-  const response = await fetch(`${url}?${params}`);
-  if (!response.ok) throw new Error(`Open-Meteo が ${response.status} を返しました: ${await response.text()}`);
-  const body = (await response.json()) as DailyResponse;
-  return body.daily.time.map((date, i) => {
-    const sunshine = body.daily.sunshine_duration[i];
-    return {
-      date,
-      tempMax: body.daily.temperature_2m_max[i],
-      tempMin: body.daily.temperature_2m_min[i],
-      precipitation: body.daily.precipitation_sum[i],
-      sunshine: sunshine === null ? null : sunshine / 3600,
-    };
-  });
-}
-
-const complete = (day: WeatherDay) =>
-  day.tempMax !== null && day.tempMin !== null && day.precipitation !== null && day.sunshine !== null;
-
-/** start〜end (どちらも含む) の日別の天気。返す配列は日付の順 */
-export async function fetchWeather(location: Location, start: string, end: string): Promise<WeatherDay[]> {
-  const archive = await fetchDaily(ARCHIVE_URL, location, start, end);
-  const missing = archive.filter((day) => !complete(day));
-  if (missing.length === 0) return archive;
-
-  const recent = await fetchDaily(FORECAST_URL, location, missing[0].date, end);
-  const byDate = new Map(recent.map((day) => [day.date, day]));
-  return archive.map((day) => (complete(day) ? day : (byDate.get(day.date) ?? day)));
+  const response = await fetch(`${NCEI_URL}?${params}`);
+  if (!response.ok) throw new Error(`NOAA NCEI が ${response.status} を返しました: ${await response.text()}`);
+  const records = (await response.json()) as Record[];
+  return records
+    .map((r) => ({ date: r.DATE, tempMax: numberOrNull(r.TMAX), tempMin: numberOrNull(r.TMIN), precipitation: numberOrNull(r.PRCP) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }

@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/*
+ * Anomer の色 (役割ごと)
+ * canvas=ページの地 / surface=カード / sunken=面の中の一段沈んだ塗り / line=区切り線
+ * ink=本文 / ink-soft=補足 / ink-mute=控えめな文字
+ * accent=操作 (ボタン・リンク・選択) / up=数字を押し上げた原因 / down=押し下げた原因 / unknown=説明できない分
+ */
+@theme {
+  --font-sans: "Inter Variable", "Noto Sans JP Variable", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --color-canvas: #f6f5f1;
+  --color-surface: #ffffff;
+  --color-sunken: #efede7;
+  --color-line: #e2dfd6;
+  --color-line-strong: #8d887b;
+  --color-ink: #1c1b18;
+  --color-ink-soft: #4a4740;
+  --color-ink-mute: #6b675d;
+
+  --color-accent: #3b3fd8;
+  --color-accent-hover: #2f32b8;
+  --color-accent-tint: #e9e9fb;
+  --color-on-accent: #ffffff;
+
+  --color-up: #0f7a5c;
+  --color-up-tint: #dcefe8;
+  --color-down: #c2410c;
+  --color-down-tint: #f9e3d8;
+  --color-unknown: #8d887b;
+
+  --color-danger: #b42318;
+  --color-danger-tint: #fbe4e2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: #141413;
+    --color-surface: #1d1c1a;
+    --color-sunken: #252421;
+    --color-line: #34322e;
+    --color-line-strong: #7d786c;
+    --color-ink: #efede7;
+    --color-ink-soft: #c9c5bb;
+    --color-ink-mute: #a29d91;
+
+    --color-accent: #9a9cff;
+    --color-accent-hover: #b5b6ff;
+    --color-accent-tint: #26274a;
+    --color-on-accent: #121330;
+
+    --color-up: #4cc79f;
+    --color-up-tint: #173a2f;
+    --color-down: #ff8f5c;
+    --color-down-tint: #45251a;
+    --color-unknown: #8d887b;
+
+    --color-danger: #ff8a80;
+    --color-danger-tint: #47201d;
+  }
+}
+
+html {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

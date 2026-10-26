@@ -8,7 +8,7 @@ import type { WeatherDay } from "./weather";
  * - 広告を止めた期間 (広告費が0になり、1〜2日遅れで注文が減る)
  * - リールが伸びた日 (プロフィールへの訪問が跳ね、その日と翌日の注文が増える)
  * - 給料日 (毎月1日と15日、その日と翌日に注文が増える)
- * - 雨 (降水量に比例して来店が減る)
+ * - 雨 (降水量に比例して来店が減る。NOAA が降水量を出していない日は、雨の影響を入れない)
  * - 曜日 (週末に増える)、ゆるやかな成長
  */
 
@@ -123,8 +123,8 @@ export function simulate(dates: string[], weather: WeatherDay[], seed: number, e
     const dow = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
     const growth = 1 + SHOP.growthPerYear * (t / 365);
     const payday = [1, 2, 15, 16].includes(day) ? 1 + SHOP.paydayLift : 1;
-    const rain = weather[t]?.precipitation ?? 0;
-    const rainFactor = Math.max(SHOP.rainFloor, 1 - SHOP.rainPerMm * rain);
+    const rain = weather[t].precipitation;
+    const rainFactor = rain === null ? 1 : Math.max(SHOP.rainFloor, 1 - SHOP.rainPerMm * rain);
     const adOrders =
       SHOP.adOrdersPerDollarLag1 * (adSpend[t - 1] ?? SHOP.adBudget) + SHOP.adOrdersPerDollarLag2 * (adSpend[t - 2] ?? SHOP.adBudget);
     const igOrders = SHOP.ordersPerProfileVisit * (visits + 0.5 * (profileVisits[t - 1] ?? SHOP.baseProfileVisits));

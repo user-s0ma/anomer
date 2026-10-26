@@ -8,7 +8,7 @@ import path from "path";
 export default defineConfig({
   plugins: [cloudflare({ viteEnvironment: { name: "ssr" }, inspectorPort: false }), reactRouter(), tailwindcss()],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: { "@": path.resolve(import.meta.dirname, "./src") },
   },
   ssr: {
     resolve: { conditions: ["workerd", "worker", "browser"] },

@@ -32,7 +32,7 @@ export const SOURCES: SourceDefinition[] = [
   { id: "orders", label: { en: "Orders", ja: "注文" }, kind: "simulated", modeledOn: "Daily order totals from the shop's checkout" },
   { id: "meta_ads", label: { en: "Meta ads", ja: "Meta の広告" }, kind: "simulated", modeledOn: "Meta Marketing API (Insights)" },
   { id: "instagram", label: { en: "Instagram", ja: "Instagram" }, kind: "simulated", modeledOn: "Instagram Graph API (insights)" },
-  { id: "weather", label: { en: "Weather", ja: "天気" }, kind: "live", modeledOn: "Open-Meteo historical weather" },
+  { id: "weather", label: { en: "Weather", ja: "天気" }, kind: "live", modeledOn: "NOAA NCEI daily summaries (GHCN-Daily)" },
 ];
 
 const metric = (
@@ -85,10 +85,9 @@ export const METRICS: MetricDefinition[] = [
   metric("instagram", "ig_saves", "Saves", "保存", "saves", "sum", "Saves of the shop's posts that day.", INSTAGRAM_LATENCY_DAYS),
   metric("instagram", "ig_shares", "Shares", "シェア", "shares", "sum", "Shares of the shop's posts that day.", INSTAGRAM_LATENCY_DAYS),
 
-  metric("weather", "temp_max", "High temperature", "最高気温", "°C", "mean", "Highest air temperature at the shop's location that day."),
-  metric("weather", "temp_min", "Low temperature", "最低気温", "°C", "mean", "Lowest air temperature at the shop's location that day."),
-  metric("weather", "precipitation", "Precipitation", "降水量", "mm", "sum", "Total rain and snow at the shop's location that day."),
-  metric("weather", "sunshine", "Sunshine", "日照時間", "hours", "sum", "Hours of sunshine at the shop's location that day."),
+  metric("weather", "temp_max", "High temperature", "最高気温", "°C", "mean", "Highest air temperature that day, measured at the city's main airport weather station."),
+  metric("weather", "temp_min", "Low temperature", "最低気温", "°C", "mean", "Lowest air temperature that day, measured at the city's main airport weather station."),
+  metric("weather", "precipitation", "Precipitation", "降水量", "mm", "sum", "Rain and melted snow that day, measured at the city's main airport weather station."),
 ];
 
 export const METRIC_BY_KEY = new Map(METRICS.map((m) => [m.key, m]));
