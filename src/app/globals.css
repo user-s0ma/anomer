@@ -43,6 +43,14 @@ html {
     @apply mx-auto w-full max-w-6xl px-4;
   }
 
+  /* トップの1枚目の背景。テーマの色の淡い光を左上と右に置き、下に向かって地の色に溶かす */
+  .hero-glow {
+    background:
+      radial-gradient(55% 70% at 12% 20%, color-mix(in srgb, var(--color-accent) 30%, transparent), transparent 70%),
+      radial-gradient(45% 60% at 88% 45%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 70%);
+    mask-image: linear-gradient(to bottom, black 60%, transparent);
+  }
+
   /* 見出しの大きな字は字間を詰める */
   .h-display {
     letter-spacing: -0.06em;

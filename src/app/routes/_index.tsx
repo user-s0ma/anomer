@@ -34,19 +34,21 @@ export default function Landing() {
 
   return (
     <div className="min-h-dvh bg-white font-sans text-black">
-      <header className="sticky top-0 z-30 bg-white/70 backdrop-blur">
+      <header className="relative z-30">
         <div className="ui-container flex h-16 items-center justify-between">
           <Logo className="text-lg" />
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <Link to="/login" className="text-sm font-semibold text-black/50 transition-colors hover:text-black">
+            <Link to="/login" className="text-sm font-semibold text-black/50 transition-colors hover:text-accent">
               {t("common.signIn")}
             </Link>
           </div>
         </div>
       </header>
 
-      <section className="ui-container grid items-center gap-14 pt-16 pb-24 lg:grid-cols-[1fr_1.1fr] lg:pt-24">
+      <section className="relative">
+        <div aria-hidden className="hero-glow pointer-events-none absolute inset-x-0 -top-16 bottom-0" />
+        <div className="ui-container relative grid items-center gap-14 pt-16 pb-24 lg:grid-cols-[1fr_1.1fr] lg:pt-24">
         <div>
           <h1 className="h-display text-4xl font-semibold sm:text-6xl">{t("landing.headline")}</h1>
           <p className="mt-8 max-w-xl text-base leading-relaxed text-black/50 sm:text-lg">{t("landing.lead")}</p>
@@ -55,8 +57,8 @@ export default function Landing() {
           </div>
         </div>
 
-        <figure className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_40px_80px_-32px_rgba(0,0,0,0.35)]">
-          <p className="ml-auto w-fit rounded-3xl bg-black/10 px-4 py-2 text-sm">{t("landing.sample.question")}</p>
+        <figure className="rounded-2xl border border-accent/25 bg-white p-5 shadow-2xl shadow-accent/20">
+          <p className="ml-auto w-fit rounded-3xl bg-accent px-4 py-2 text-sm text-on-accent">{t("landing.sample.question")}</p>
           <div className="mt-5">
             <Waterfall
               before={SAMPLE.before}
@@ -72,12 +74,13 @@ export default function Landing() {
           </div>
           <figcaption className="mt-4 text-xs leading-5 text-black/50">{t("landing.sample.caption")}</figcaption>
         </figure>
+        </div>
       </section>
 
       <section className="border-t border-black/10">
         <div className="ui-container grid gap-10 py-20 md:grid-cols-3">
           {[1, 2, 3].map((n) => (
-            <div key={n}>
+            <div key={n} className="border-t-2 border-accent pt-6">
               <h2 className="text-lg font-semibold">{t(`landing.step${n}Title`)}</h2>
               <p className="mt-3 text-sm leading-relaxed text-black/50">{t(`landing.step${n}Body`)}</p>
             </div>
