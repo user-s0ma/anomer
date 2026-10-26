@@ -54,8 +54,7 @@ export default function Login() {
         <Link to="/" className="mb-10 inline-block">
           <Logo className="text-lg" />
         </Link>
-        <h1 className="h-display text-3xl font-semibold">{t("login.demoTitle")}</h1>
-        <p className="mt-3 mb-6 text-sm leading-6 text-black/50">{t("login.demoBody")}</p>
+        <h1 className="h-display mb-6 text-3xl font-semibold">{t("login.demoTitle")}</h1>
         <DemoButton />
 
         <details className="mt-10" open={ownAccountOpen} onToggle={(e) => setOwnAccountOpen(e.currentTarget.open)}>

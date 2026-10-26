@@ -10,7 +10,6 @@ const ja: Dictionary = {
     signIn: "ログイン",
     signOut: "ログアウト",
     tryDemo: "デモアカウントで試す",
-    tryDemoNote: "審査員向け。登録は要りません。",
     loading: "読み込み中…",
     error: "うまくいきませんでした。もう一度お試しください。",
     language: "言語",
@@ -34,7 +33,7 @@ const ja: Dictionary = {
       instagram: "Instagram",
       weather: "天気",
       caption:
-        "架空の Portland のパン屋のデータ（天気は本物の NOAA）で Anomer が計算した結果です。広告・Instagram・注文は、本物の API の形に合わせたシミュレーターです。10/11〜17に広告を止めた効果として、約 −132 件を仕込んであります。",
+        "架空の Portland のパン屋（天気は本物の NOAA）。広告を止めた効果として約 −132 件を仕込んであります。",
     },
     weatherCredit: "天気: 米国海洋大気庁 (NOAA) 国立環境情報センター",
     hackathon: "Meta Global AI Developer Hackathon（2026年）のために作りました。",
@@ -51,7 +50,6 @@ const ja: Dictionary = {
     createFailed: "アカウントを作れませんでした。",
     captcha: "下の確認を済ませてください。",
     demoTitle: "ハッカソンの審査員の方へ",
-    demoBody: "パン屋の1年分の広告・Instagram・注文と本物の天気が入った、共有のデモアカウントです。登録は要りません。",
     ownAccount: "自分のアカウントで使う",
   },
   app: {
@@ -76,7 +74,6 @@ const ja: Dictionary = {
   result: {
     comparing: "{{target}}：{{change}} と {{baseline}} の比較",
     breakdown: "動かしたもの",
-    rangeNote: "ひげは95%の幅",
     unexplained: "説明できない分",
     mayBeNoise: "偶然かもしれない",
     details: "くわしく",
@@ -107,14 +104,12 @@ const ja: Dictionary = {
     title: "データ源",
     simulated: "シミュレーター",
     live: "本物",
-    modeledOn: "形を合わせた API: {{api}}",
     latency: "{{count}}日遅れで届く",
-    dataUntil: "NOAA の観測値は数日遅れで届くので、どのデータ源も天気がある最後の日（{{date}}）までです。",
+    dataUntil: "{{date}}までのデータ",
     lastDays: "直近90日",
   },
   setup: {
     title: "店を設定する",
-    lead: "広告・Instagram・注文は、本物の API の形に合わせたシミュレーターから届きます。天気は本物で、選んだ都市の NOAA の観測値です。",
     name: "店の名前",
     city: "都市",
     cityPlaceholder: "米国の都市を選ぶ",

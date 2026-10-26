@@ -36,8 +36,7 @@ export default function Setup() {
   return (
     <PageBody title={t("setup.title")}>
       <div className="max-w-xl pl-2">
-        <p className="text-sm leading-6 text-black/50">{t("setup.lead")}</p>
-        <form onSubmit={submit} className="mt-6 space-y-4">
+        <form onSubmit={submit} className="space-y-4">
           <label className="block">
             <span className="mb-1 block text-xs">{t("setup.name")}</span>
             <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} className="input" />

@@ -52,7 +52,6 @@ export default function Landing() {
           <p className="mt-8 max-w-xl text-base leading-relaxed text-black/50 sm:text-lg">{t("landing.lead")}</p>
           <div className="mt-10 max-w-sm">
             <DemoButton />
-            <p className="mt-3 text-xs leading-5 text-black/50">{t("common.tryDemoNote")}</p>
           </div>
         </div>
 

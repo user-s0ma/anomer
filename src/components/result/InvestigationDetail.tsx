@@ -72,9 +72,7 @@ export function InvestigationDetail({ investigation }: { investigation: Investig
               })),
               { key: "unexplained", label: t("result.unexplained"), value: result.unexplained, kind: "unexplained" as const },
             ]}
-          />
-          <p className="mt-1 text-xs text-black/50">{t("result.rangeNote")}</p>
-        </div>
+          />        </div>
         <ul className="divide-y divide-black/20 border-t border-black/20">
           {result.groups.map((group) => {
             const text = textOf.get(group.key);

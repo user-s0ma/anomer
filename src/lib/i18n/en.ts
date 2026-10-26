@@ -8,7 +8,6 @@ const en = {
     signIn: "Sign in",
     signOut: "Sign out",
     tryDemo: "Open the demo account",
-    tryDemoNote: "For hackathon judges. No sign-up.",
     loading: "Loading…",
     error: "Something went wrong. Please try again.",
     language: "Language",
@@ -32,7 +31,7 @@ const en = {
       instagram: "Instagram",
       weather: "Weather",
       caption:
-        "Computed by Anomer on a simulated Portland bakery with real NOAA weather. Ads, Instagram and orders come from simulators shaped like the real APIs. Planted effect of pausing the ads Oct 11–17: about −132 orders.",
+        "Simulated Portland bakery with real NOAA weather. Planted effect of the ad pause: about −132 orders.",
     },
     weatherCredit: "Weather: NOAA National Centers for Environmental Information",
     hackathon: "Built for the Meta Global AI Developer Hackathon, 2026.",
@@ -49,7 +48,6 @@ const en = {
     createFailed: "Could not create the account.",
     captcha: "Please complete the check below.",
     demoTitle: "For hackathon judges",
-    demoBody: "A shared demo account with a bakery's year of ads, Instagram, orders and real weather. No sign-up.",
     ownAccount: "Or use your own account",
   },
   app: {
@@ -74,7 +72,6 @@ const en = {
   result: {
     comparing: "{{target}}, {{change}} compared with {{baseline}}",
     breakdown: "What moved it",
-    rangeNote: "Whiskers show the 95% range",
     unexplained: "Not explained",
     mayBeNoise: "May be noise",
     details: "Details",
@@ -105,14 +102,12 @@ const en = {
     title: "Data sources",
     simulated: "Simulator",
     live: "Live",
-    modeledOn: "Shaped like: {{api}}",
     latency: "Arrives {{count}} days late",
-    dataUntil: "Data until {{date}}, the last day with weather, since NOAA publishes station observations a few days late.",
+    dataUntil: "Data until {{date}}",
     lastDays: "Last 90 days",
   },
   setup: {
     title: "Set up your shop",
-    lead: "Your shop's ads, Instagram and orders will come from simulators shaped like the real APIs. The weather is real: daily observations from NOAA for the city you choose.",
     name: "Shop name",
     city: "City",
     cityPlaceholder: "Choose a US city",
