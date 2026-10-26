@@ -14,18 +14,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 /**
  * 見本の内訳。架空のパン屋 (Portland、本物の NOAA の天気) のデータで、10/12〜18 を 10/5〜11 と比べて
- * 実際に計算した結果 (scripts/try-demo.ts、2026-10-27)。広告は 10/11〜17 に止めてあり、仕込んだ効果は約 -132
+ * 実際に計算した結果 (デモの店と同じ seed、scripts/try-demo.ts、2026-10-27)。広告は 10/11〜17 に止めてあり、仕込んだ効果は -129.4
  */
 const SAMPLE = {
-  before: 1090,
-  after: 972,
+  before: 1104,
+  after: 978,
   rows: [
-    { key: "ads", value: -128.8, margin: 60.8 },
-    { key: "payday", value: 22.8, margin: 13.1 },
-    { key: "instagram", value: 5.5, margin: 6.3 },
-    { key: "weather", value: -0.6, margin: 9.2 },
+    { key: "ads", value: -133.0, margin: 27.0 },
+    { key: "payday", value: 27.3, margin: 9.5 },
+    { key: "instagram", value: 5.3, margin: 0.8 },
+    { key: "weather", value: 2.2, margin: 0.4 },
   ],
-  unexplained: -16.9,
+  unexplained: -27.8,
 } as const;
 
 export default function Landing() {

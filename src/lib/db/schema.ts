@@ -83,17 +83,30 @@ export const shop = sqliteTable("Shop", {
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  /** 店の都市 (src/lib/sources/cities.ts の id)。天気の観測所とタイムゾーンはここから決まる */
-  cityId: text("cityId").notNull(),
-  /** シミュレーターの seed と、仕込んだ原因 (SimulationEvents の JSON) */
-  simulationSeed: integer("simulationSeed").notNull(),
-  simulationEvents: text("simulationEvents").notNull(),
+  /** 店の場所の都市の名前 (画面に出す) */
+  city: text("city").notNull(),
+  /** IANA のタイムゾーン。「昨日」はこの時刻で決める */
+  timezone: text("timezone").notNull(),
   /** データの最初の日 (YYYY-MM-DD) */
   dataStart: text("dataStart").notNull(),
   /** データを最後にそろえた時刻 */
   syncedAt: timestamp("syncedAt"),
   createdAt: createdAt(),
 });
+
+/** 店がつないだデータ源 (プラグイン) と、その設定 (プラグインごとの JSON) */
+export const shopSource = sqliteTable(
+  "ShopSource",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => shop.userId, { onDelete: "cascade" }),
+    sourceId: text("sourceId").notNull(),
+    config: text("config").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.sourceId] })],
+);
 
 /** 数字ごとの日別の値。dataStart から並べた JSON の配列 (まだ届いていない日は null) */
 export const series = sqliteTable(
@@ -103,6 +116,8 @@ export const series = sqliteTable(
       .notNull()
       .references(() => shop.userId, { onDelete: "cascade" }),
     metric: text("metric").notNull(),
+    /** この数字を返したデータ源 */
+    sourceId: text("sourceId").notNull(),
     startDate: text("startDate").notNull(),
     values: text("values").notNull(),
     updatedAt: updatedAt(),

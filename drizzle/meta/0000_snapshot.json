@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c4b99f7a-de55-4a31-8e77-15bd782a7153",
+  "id": "4670f430-eeef-47ad-866d-fe8e55e954fe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "Account": {
@@ -269,6 +269,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "sourceId": {
+          "name": "sourceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "startDate": {
           "name": "startDate",
           "type": "text",
@@ -431,22 +438,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "cityId": {
-          "name": "cityId",
+        "city": {
+          "name": "city",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "simulationSeed": {
-          "name": "simulationSeed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "simulationEvents": {
-          "name": "simulationEvents",
+        "timezone": {
+          "name": "timezone",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -491,6 +491,66 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "ShopSource": {
+      "name": "ShopSource",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sourceId": {
+          "name": "sourceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "config": {
+          "name": "config",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ShopSource_userId_Shop_userId_fk": {
+          "name": "ShopSource_userId_Shop_userId_fk",
+          "tableFrom": "ShopSource",
+          "tableTo": "Shop",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ShopSource_userId_sourceId_pk": {
+          "columns": [
+            "userId",
+            "sourceId"
+          ],
+          "name": "ShopSource_userId_sourceId_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },

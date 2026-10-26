@@ -10,11 +10,9 @@ import {
   listInvestigations,
   runInvestigation,
 } from "@/lib/investigations/service";
-import { createShop, DEMO_SHOP, getShop, loadSeries } from "@/lib/shop/service";
-import { METRICS, SOURCES } from "@/lib/sources/catalog";
+import { getShop, listConnections, loadSeries } from "@/lib/shop/service";
+import { createStarterShop, DEMO_SHOP, suggestedQuestions } from "@/lib/shop/setup";
 import { CITIES, CITY_BY_ID } from "@/lib/sources/cities";
-import type { SimulationEvents } from "@/lib/sources/simulator";
-import { addDays } from "@/lib/util/dates";
 import type { ApiEnv } from "./types";
 
 const app = new Hono<ApiEnv>();
@@ -31,19 +29,7 @@ async function shopFor(env: AppEnv, user: { id: string; email: string }) {
   const found = await getShop(env, user.id);
   if (found || !isDemoUser(user)) return found;
   const { seed, ...input } = DEMO_SHOP;
-  return createShop(env, user.id, input, seed);
-}
-
-/** 聞いてみる質問の例。仕込んだ原因の日付に合わせる (広告は止めた翌日から効く) */
-function suggestions(events: SimulationEvents, locale: Locale) {
-  const day = (date: string) =>
-    new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
-  const from = day(addDays(events.adsPaused.start, 1));
-  const to = day(addDays(events.adsPaused.end, 1));
-  const viral = day(events.viralReel);
-  return locale === "ja"
-    ? [`${from}〜${to}の注文が減ったのはなぜ？`, `${viral}に注文が跳ねたのはなぜ？`, "先週の売上が変わったのはなぜ？", "先月、ウェブサイトのタップが増えたのはなぜ？"]
-    : [`Why did orders drop ${from}–${to}?`, `Why did orders jump on ${viral}?`, "Why did revenue change last week?", "Why did website taps rise last month?"];
+  return createStarterShop(env, user.id, input, seed);
 }
 
 app.get("/me", async (c) => {
@@ -51,9 +37,9 @@ app.get("/me", async (c) => {
   const shop = await shopFor(c.env, user);
   return c.json({
     user: { name: user.name, email: user.email, demo: isDemoUser(user) },
-    shop: shop && { name: shop.name, city: CITY_BY_ID.get(shop.cityId)!.label, dataStart: shop.dataStart },
+    shop: shop && { name: shop.name, city: shop.city, dataStart: shop.dataStart },
     cities: CITIES.map((city) => ({ id: city.id, label: city.label })),
-    suggestions: shop ? suggestions(JSON.parse(shop.simulationEvents) as SimulationEvents, localeFromRequest(c.req.raw)) : [],
+    suggestions: shop ? suggestedQuestions(await listConnections(c.env, shop.userId), localeFromRequest(c.req.raw)) : [],
   });
 });
 
@@ -70,19 +56,21 @@ app.post("/shop", async (c) => {
   if (await getShop(c.env, user.id)) return c.json({ message: "You already have a shop." }, 409);
   // 登録した人の店も、データは架空 (シミュレーター) で、天気だけは選んだ都市の本物
   const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-  await createShop(c.env, user.id, parsed.data, seed);
+  await createStarterShop(c.env, user.id, parsed.data, seed);
   return c.json({ ok: true });
 });
 
-/** データ源と数字の一覧、日別の値 (グラフ用) */
+/** つないだデータ源と、その数字の日別の値 (グラフ用) */
 app.get("/data", async (c) => {
   const shop = await shopFor(c.env, c.get("user"));
   if (!shop) return c.json({ message: "Create your shop first." }, 404);
-  const { dates, values } = await loadSeries(c.env, shop);
+  const { dates, values, sources } = await loadSeries(c.env, shop);
   return c.json({
-    sources: SOURCES,
-    metrics: METRICS.map((m) => ({ ...m, values: values.get(m.key) ?? [] })),
     dates,
+    sources: sources.map((source) => ({
+      ...source,
+      metrics: source.metrics.map((m) => ({ ...m, values: values.get(m.key) ?? [] })),
+    })),
   });
 });
 

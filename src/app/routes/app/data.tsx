@@ -50,9 +50,7 @@ export default function Data() {
                 <span className="truncate text-xs text-black/50">{source.modeledOn}</span>
               </div>
               <ul className="grid gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-                {data.data.metrics
-                  .filter((m) => m.source === source.id)
-                  .map((m) => {
+                {source.metrics.map((m) => {
                     const recent = m.values.slice(-DAYS);
                     const last = [...recent].reverse().find((v) => v !== null);
                     return (

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { MetricDefinition } from "../sources/catalog";
+import type { SourcedMetric } from "../sources/types";
 import { addDays, daysBetween } from "../util/dates";
 import { MAX_LAG_DAYS } from "../analysis/investigate";
 import { askStructured } from "./client";
@@ -43,7 +43,7 @@ type Context = {
   shopName: string;
   timezone: string;
   today: string;
-  metrics: MetricDefinition[];
+  metrics: SourcedMetric[];
   /** 数字ごとの、値がある最後の日 */
   lastDates: Map<string, string>;
   dataStart: string;

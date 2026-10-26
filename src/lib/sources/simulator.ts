@@ -1,8 +1,7 @@
-import type { WeatherDay } from "./weather";
-
 /**
- * 架空の店の数字を作るシミュレーター。広告・Instagram・注文の数字を、形だけ本物の API に合わせて返す。
- * 注文は本物の天気 (雨) でも動く。同じ seed と天気からは、いつ作っても同じ数字になる。
+ * 架空の店の数字を作るシミュレーター。広告・Instagram・注文を、形だけ本物の API に合わせて作る。
+ * 3つのデータ源 (プラグイン) に分かれていて、注文は広告費・プロフィールへの訪問・本物の天気 (雨) を受け取って動く。
+ * 同じ seed と入力からは、いつ作っても同じ数字になる (日ごとに乱数を作るので、日を足しても過去は変わらない)。
  *
  * 仕込んだ原因 (あとで AI の答えと比べる):
  * - 広告を止めた期間 (広告費が0になり、1〜2日遅れで注文が減る)
@@ -11,11 +10,6 @@ import type { WeatherDay } from "./weather";
  * - 雨 (降水量に比例して来店が減る。NOAA が降水量を出していない日は、雨の影響を入れない)
  * - 曜日 (週末に増える)、ゆるやかな成長
  */
-
-export type SimulationEvents = {
-  adsPaused: { start: string; end: string };
-  viralReel: string;
-};
 
 /** 再現できる乱数 (mulberry32) */
 function generator(seed: number) {
@@ -28,7 +22,7 @@ function generator(seed: number) {
   };
 }
 
-/** 日付と数字の名前から、その日だけの乱数を作る (日を足しても過去の値が変わらないように) */
+/** 日付と名前から、その日だけの乱数を作る */
 function dailyRandom(seed: number, date: string, name: string) {
   let h = seed >>> 0;
   for (const ch of `${date}:${name}`) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
@@ -76,34 +70,60 @@ const SHOP = {
 
 const r2 = (value: number) => Math.round(value * 100) / 100;
 
-export function simulate(dates: string[], weather: WeatherDay[], seed: number, events: SimulationEvents) {
-  const n = dates.length;
-  const out: Record<string, number[]> = {};
-  const put = (key: string, t: number, value: number) => {
-    (out[key] ??= new Array<number>(n))[t] = value;
-  };
+function table(keys: string[], n: number) {
+  return Object.fromEntries(keys.map((key) => [key, new Array<number>(n)])) as Record<string, number[]>;
+}
 
-  let followers = 2400;
-  const adSpend: number[] = [];
-  const profileVisits: number[] = [];
+/** 広告が呼ぶ注文の見込み (1日前と2日前の広告費から)。最初の2日は予算どおりに出していたものとする */
+function adDrivenOrders(spend: number[], t: number) {
+  return SHOP.adOrdersPerDollarLag1 * (spend[t - 1] ?? SHOP.adBudget) + SHOP.adOrdersPerDollarLag2 * (spend[t - 2] ?? SHOP.adBudget);
+}
 
-  for (let t = 0; t < n; t++) {
-    const date = dates[t];
-    const rand = dailyRandom(seed, date, "day");
+/** 日予算を見直す間隔 (日)。実際の店のように、4週間ごとに予算を上げ下げする */
+const BUDGET_PERIOD_DAYS = 28;
 
-    // --- Meta の広告
-    const paused = date >= events.adsPaused.start && date <= events.adsPaused.end;
-    const spend = paused ? 0 : Math.max(0, SHOP.adBudget * (1 + 0.06 * normal(rand)));
+/** その日の日予算。1970-01-01 から数えた4週間ごとに、平均の 0.6〜1.4 倍のどこかに決める */
+function dailyBudget(seed: number, date: string) {
+  const period = Math.floor(Date.parse(`${date}T00:00:00Z`) / 86_400_000 / BUDGET_PERIOD_DAYS);
+  return SHOP.adBudget * (0.6 + 0.8 * dailyRandom(seed, String(period), "budget")());
+}
+
+/** Meta の広告。paused の期間は広告を止める */
+export function simulateAds(dates: string[], seed: number, paused: { start: string; end: string }) {
+  const out = table(["ad_spend", "ad_impressions", "ad_reach", "ad_clicks", "ad_ctr", "ad_cpc", "ad_cpm", "ad_conversions"], dates.length);
+  dates.forEach((date, t) => {
+    const rand = dailyRandom(seed, date, "ads");
+    const budget = dailyBudget(seed, date);
+    const spend = date >= paused.start && date <= paused.end ? 0 : Math.max(0, budget * (1 + 0.06 * normal(rand)));
     const cpm = 8.5 * (1 + 0.08 * normal(rand));
     const impressions = spend === 0 ? 0 : Math.round((spend / cpm) * 1000);
-    const reach = Math.round(impressions / (1.55 + 0.1 * rand()));
-    const ctr = 0.011 * (1 + 0.1 * normal(rand));
-    const clicks = poisson(rand, impressions * ctr);
-    adSpend.push(spend);
+    const clicks = poisson(rand, impressions * 0.011 * (1 + 0.1 * normal(rand)));
+    out.ad_spend[t] = r2(spend);
+    out.ad_impressions[t] = impressions;
+    out.ad_reach[t] = Math.round(impressions / (1.55 + 0.1 * rand()));
+    out.ad_clicks[t] = clicks;
+    out.ad_ctr[t] = impressions === 0 ? 0 : r2((clicks / impressions) * 100);
+    out.ad_cpc[t] = clicks === 0 ? 0 : r2(spend / clicks);
+    out.ad_cpm[t] = impressions === 0 ? 0 : r2((spend / impressions) * 1000);
+  });
+  // Meta が広告のおかげとみなす注文 (広告が呼んだ注文の見込みの7割ほど)
+  dates.forEach((date, t) => {
+    out.ad_conversions[t] = poisson(dailyRandom(seed, date, "conversions"), adDrivenOrders(out.ad_spend, t) * 0.7);
+  });
+  return out;
+}
 
-    // --- Instagram
+/** Instagram。viralReel の日にリールが大きく伸びる */
+export function simulateInstagram(dates: string[], seed: number, viralReel: string) {
+  const out = table(
+    ["ig_followers", "ig_profile_visits", "ig_website_taps", "ig_feed_posts", "ig_reels", "ig_stories", "ig_views", "ig_reach", "ig_likes", "ig_saves", "ig_shares"],
+    dates.length,
+  );
+  let followers = 2400;
+  dates.forEach((date, t) => {
+    const rand = dailyRandom(seed, date, "instagram");
     const feedPosts = rand() < 0.35 ? 1 : 0;
-    const isViral = date === events.viralReel;
+    const isViral = date === viralReel;
     const reels = isViral || rand() < 0.18 ? 1 : 0;
     const stories = poisson(rand, 1.4);
     const views = Math.round(
@@ -113,52 +133,51 @@ export function simulate(dates: string[], weather: WeatherDay[], seed: number, e
         600 +
         (isViral ? SHOP.viralViews : 0),
     );
-    const igReach = Math.round(views * (0.62 + 0.05 * rand()));
     const visits = poisson(rand, SHOP.baseProfileVisits + views * 0.018);
-    profileVisits.push(visits);
     followers += poisson(rand, 4 + views * 0.0022);
+    out.ig_followers[t] = followers;
+    out.ig_profile_visits[t] = visits;
+    out.ig_website_taps[t] = poisson(rand, visits * 0.09);
+    out.ig_feed_posts[t] = feedPosts;
+    out.ig_reels[t] = reels;
+    out.ig_stories[t] = stories;
+    out.ig_views[t] = views;
+    out.ig_reach[t] = Math.round(views * (0.62 + 0.05 * rand()));
+    out.ig_likes[t] = poisson(rand, views * 0.035);
+    out.ig_saves[t] = poisson(rand, views * 0.004);
+    out.ig_shares[t] = poisson(rand, views * 0.002);
+  });
+  return out;
+}
 
-    // --- 注文
+/** 注文。広告費・プロフィールへの訪問・降水量 (届いていない日は null) を受け取って作る */
+export function simulateOrders(
+  dates: string[],
+  seed: number,
+  inputs: { adSpend: (number | null)[]; profileVisits: (number | null)[]; precipitation: (number | null)[] },
+) {
+  const out = table(["orders", "revenue", "average_order_value", "new_customers", "returning_customers"], dates.length);
+  const spend = inputs.adSpend.map((v) => v ?? 0);
+  dates.forEach((date, t) => {
+    const rand = dailyRandom(seed, date, "orders");
     const day = Number(date.slice(8, 10));
     const dow = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
     const growth = 1 + SHOP.growthPerYear * (t / 365);
     const payday = [1, 2, 15, 16].includes(day) ? 1 + SHOP.paydayLift : 1;
-    const rain = weather[t].precipitation;
+    const rain = inputs.precipitation[t];
     const rainFactor = rain === null ? 1 : Math.max(SHOP.rainFloor, 1 - SHOP.rainPerMm * rain);
-    const adOrders =
-      SHOP.adOrdersPerDollarLag1 * (adSpend[t - 1] ?? SHOP.adBudget) + SHOP.adOrdersPerDollarLag2 * (adSpend[t - 2] ?? SHOP.adBudget);
-    const igOrders = SHOP.ordersPerProfileVisit * (visits + 0.5 * (profileVisits[t - 1] ?? SHOP.baseProfileVisits));
-    const expected = SHOP.baseOrders * growth * SHOP.dayOfWeek[dow] * payday * rainFactor + adOrders + igOrders;
+    const visits = inputs.profileVisits[t] ?? SHOP.baseProfileVisits;
+    const visitsBefore = inputs.profileVisits[t - 1] ?? SHOP.baseProfileVisits;
+    const igOrders = SHOP.ordersPerProfileVisit * (visits + 0.5 * visitsBefore);
+    const expected = SHOP.baseOrders * growth * SHOP.dayOfWeek[dow] * payday * rainFactor + adDrivenOrders(spend, t) + igOrders;
     const orders = poisson(rand, expected);
     const aov = SHOP.averageOrderValue * (1 + 0.04 * normal(rand));
-    const newCustomers = Math.round(orders * SHOP.newCustomerShare * (1 + 0.1 * normal(rand)));
-
-    put("ad_spend", t, r2(spend));
-    put("ad_impressions", t, impressions);
-    put("ad_reach", t, reach);
-    put("ad_clicks", t, clicks);
-    put("ad_ctr", t, impressions === 0 ? 0 : r2((clicks / impressions) * 100));
-    put("ad_cpc", t, clicks === 0 ? 0 : r2(spend / clicks));
-    put("ad_cpm", t, impressions === 0 ? 0 : r2((spend / impressions) * 1000));
-    put("ad_conversions", t, Math.min(orders, poisson(rand, adOrders * 0.7)));
-
-    put("ig_followers", t, followers);
-    put("ig_profile_visits", t, visits);
-    put("ig_website_taps", t, poisson(rand, visits * 0.09));
-    put("ig_feed_posts", t, feedPosts);
-    put("ig_reels", t, reels);
-    put("ig_stories", t, stories);
-    put("ig_views", t, views);
-    put("ig_reach", t, igReach);
-    put("ig_likes", t, poisson(rand, views * 0.035));
-    put("ig_saves", t, poisson(rand, views * 0.004));
-    put("ig_shares", t, poisson(rand, views * 0.002));
-
-    put("orders", t, orders);
-    put("revenue", t, r2(orders * aov));
-    put("average_order_value", t, orders === 0 ? 0 : r2(aov));
-    put("new_customers", t, Math.min(orders, Math.max(0, newCustomers)));
-    put("returning_customers", t, orders - Math.min(orders, Math.max(0, newCustomers)));
-  }
+    const newCustomers = Math.min(orders, Math.max(0, Math.round(orders * SHOP.newCustomerShare * (1 + 0.1 * normal(rand)))));
+    out.orders[t] = orders;
+    out.revenue[t] = r2(orders * aov);
+    out.average_order_value[t] = orders === 0 ? 0 : r2(aov);
+    out.new_customers[t] = newCustomers;
+    out.returning_customers[t] = orders - newCustomers;
+  });
   return out;
 }

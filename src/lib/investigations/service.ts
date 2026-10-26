@@ -4,8 +4,8 @@ import { explain, type Explanation } from "../ai/explain";
 import { readQuestion, type QuestionPlan } from "../ai/question";
 import { getDb } from "../db/client";
 import { investigation, usage } from "../db/schema";
-import { cityOf, loadSeries, syncShopData, type ShopRecord } from "../shop/service";
-import { METRIC_BY_KEY, METRICS } from "../sources/catalog";
+import { loadSeries, syncShopData, type ShopRecord } from "../shop/service";
+import { sourcedMetrics } from "../sources/definitions";
 import { todayIn } from "../util/dates";
 
 export type InvestigationStep = "data" | "reading" | "fitting" | "explaining";
@@ -72,9 +72,11 @@ export async function runInvestigation(
   try {
     await onStep("data", id);
     await syncShopData(env, shop);
-    const { dates, values } = await loadSeries(env, shop);
+    const { dates, values, sources } = await loadSeries(env, shop);
+    // 候補になるのは、店がつないだデータ源の数字だけ
+    const metrics = sourcedMetrics(sources);
     const lastDates = new Map(
-      METRICS.map((m) => {
+      metrics.map((m) => {
         const list = values.get(m.key)!;
         let last = list.length - 1;
         while (last >= 0 && list[last] === null) last--;
@@ -87,9 +89,9 @@ export async function runInvestigation(
       question: input.question,
       locale: input.locale,
       shopName: shop.name,
-      timezone: cityOf(shop).timezone,
-      today: todayIn(cityOf(shop).timezone),
-      metrics: METRICS,
+      timezone: shop.timezone,
+      today: todayIn(shop.timezone),
+      metrics,
       lastDates,
       dataStart: shop.dataStart,
     });
@@ -99,11 +101,11 @@ export async function runInvestigation(
 
     await onStep("fitting", id);
     const excluded = new Set([plan.target, ...plan.excluded.map((e) => e.metric)]);
-    const target = METRIC_BY_KEY.get(plan.target)!;
+    const target = metrics.find((m) => m.key === plan.target)!;
     const result = investigate({
       dates,
       target: { key: target.key, values: values.get(target.key)!, aggregation: target.aggregation },
-      candidates: METRICS.filter((m) => !excluded.has(m.key)).map((m) => ({ key: m.key, group: m.source, values: values.get(m.key)! })),
+      candidates: metrics.filter((m) => !excluded.has(m.key)).map((m) => ({ key: m.key, group: m.source, values: values.get(m.key)! })),
       change: plan.change,
       baseline: plan.baseline,
     });

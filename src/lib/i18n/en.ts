@@ -30,7 +30,7 @@ const en = {
       payday: "Paydays",
       instagram: "Instagram",
       weather: "Weather",
-      caption: "Simulated bakery with a planted ad-pause effect of about −132",
+      caption: "Simulated bakery with a planted ad-pause effect of about −129",
     },
     weatherCredit: "Weather: NOAA NCEI",
     hackathon: "Built for the Meta Global AI Developer Hackathon 2026",

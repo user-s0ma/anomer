@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import type { InvestigationStep, InvestigationView } from "./investigations/service";
-import type { MetricDefinition, SourceDefinition } from "./sources/catalog";
+import type { MetricDefinition, SourceDefinition } from "./sources/types";
 
 /* 画面から呼ぶ API */
 
@@ -49,10 +49,10 @@ export const getMe = () => request<Me>("/api/me");
 export const createShop = (input: { name: string; cityId: string }) =>
   request<{ ok: true }>("/api/shop", { method: "POST", body: JSON.stringify(input) });
 
+/** 店がつないだデータ源と、その数字の日別の値 */
 export type DataResponse = {
-  sources: SourceDefinition[];
-  metrics: (MetricDefinition & { values: (number | null)[] })[];
   dates: string[];
+  sources: (Omit<SourceDefinition, "metrics"> & { metrics: (MetricDefinition & { values: (number | null)[] })[] })[];
 };
 
 export const getData = () => request<DataResponse>("/api/data");

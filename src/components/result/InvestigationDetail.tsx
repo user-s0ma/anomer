@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { InvestigationView } from "@/lib/api-client";
-import { METRIC_BY_KEY } from "@/lib/sources/catalog";
+import { METRIC_BY_KEY } from "@/lib/sources/definitions";
 import { columnLabel, formatPeriod, formatValue, groupLabel, metricLabel } from "./format";
 import { SeriesChart } from "./SeriesChart";
 import { Waterfall } from "./Waterfall";

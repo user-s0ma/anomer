@@ -32,7 +32,7 @@ const ja: Dictionary = {
       payday: "給料日",
       instagram: "Instagram",
       weather: "天気",
-      caption: "広告停止の効果を約 −132 件仕込んだ架空のパン屋",
+      caption: "広告停止の効果を約 −129 件仕込んだ架空のパン屋",
     },
     weatherCredit: "天気: NOAA NCEI",
     hackathon: "Meta Global AI Developer Hackathon 2026 のために作りました",

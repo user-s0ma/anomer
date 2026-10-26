@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { GroupKey, InvestigationResult } from "../analysis/investigate";
-import { METRIC_BY_KEY, SOURCES } from "../sources/catalog";
+import { METRIC_BY_KEY, SOURCES } from "../sources/definitions";
 import type { QuestionPlan } from "./question";
 import { askStructured } from "./client";
 

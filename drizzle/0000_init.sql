@@ -37,6 +37,7 @@ CREATE INDEX `Investigation_user_created_idx` ON `Investigation` (`userId`,`crea
 CREATE TABLE `Series` (
 	`userId` text NOT NULL,
 	`metric` text NOT NULL,
+	`sourceId` text NOT NULL,
 	`startDate` text NOT NULL,
 	`values` text NOT NULL,
 	`updatedAt` integer NOT NULL,
@@ -61,13 +62,21 @@ CREATE INDEX `Session_userId_idx` ON `Session` (`userId`);--> statement-breakpoi
 CREATE TABLE `Shop` (
 	`userId` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
-	`cityId` text NOT NULL,
-	`simulationSeed` integer NOT NULL,
-	`simulationEvents` text NOT NULL,
+	`city` text NOT NULL,
+	`timezone` text NOT NULL,
 	`dataStart` text NOT NULL,
 	`syncedAt` integer,
 	`createdAt` integer NOT NULL,
 	FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `ShopSource` (
+	`userId` text NOT NULL,
+	`sourceId` text NOT NULL,
+	`config` text NOT NULL,
+	`createdAt` integer NOT NULL,
+	PRIMARY KEY(`userId`, `sourceId`),
+	FOREIGN KEY (`userId`) REFERENCES `Shop`(`userId`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `Usage` (

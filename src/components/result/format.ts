@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import type { ColumnKind, GroupKey } from "@/lib/analysis/investigate";
-import { METRIC_BY_KEY, SOURCES } from "@/lib/sources/catalog";
+import { METRIC_BY_KEY, SOURCES } from "@/lib/sources/definitions";
 
 /** 数字を単位つきで表す。USD は $、% はそのまま、ほかは数だけ */
 export function formatValue(value: number, unit: string, locale: Locale, options: { signed?: boolean } = {}) {
