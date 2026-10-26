@@ -11,7 +11,7 @@ type RowMenuItem = {
 
 export function RowMenu({
   items,
-  ariaLabel = "この行の操作",
+  ariaLabel = "Row actions",
   disabled = false,
 }: {
   items: RowMenuItem[];

@@ -6,7 +6,7 @@ import type { Aggregation } from "../analysis/investigate";
  * プラグインが返す日別の値だけを使う
  */
 
-export type Label = { en: string; ja: string };
+export type Label = { en: string };
 
 export type MetricDefinition = {
   /** 数字の名前。すべてのプラグインを通して一意 */

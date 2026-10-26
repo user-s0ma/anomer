@@ -1,9 +1,8 @@
 import i18next, { type i18n as I18n } from "i18next";
 import { initReactI18next } from "react-i18next";
 import en from "./en";
-import ja from "./ja";
 
-export const resources = { en: { translation: en }, ja: { translation: ja } } as const;
+export const resources = { en: { translation: en } } as const;
 
 export function createI18n(locale: Locale): I18n {
   const instance = i18next.createInstance();

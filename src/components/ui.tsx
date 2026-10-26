@@ -5,7 +5,6 @@ import { useNavigate } from "react-router";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { signInDemo } from "@/lib/api-client";
-import { LOCALE_COOKIE } from "@/lib/i18n/locale";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
@@ -18,27 +17,6 @@ export function Logo({ className = "" }: { className?: string }) {
       </svg>
       Anomer
     </span>
-  );
-}
-
-export function LanguageSwitcher({ className = "" }: { className?: string }) {
-  const { t, i18n } = useTranslation();
-  const change = (locale: Locale) => {
-    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-    window.location.reload();
-  };
-  return (
-    <label className={`inline-flex items-center text-sm text-black/50 ${className}`}>
-      <span className="sr-only">{t("common.language")}</span>
-      <select
-        value={i18n.language}
-        onChange={(e) => change(e.target.value as Locale)}
-        className="cursor-pointer rounded-lg bg-transparent px-1 py-1 text-sm text-black/50 outline-none hover:text-black"
-      >
-        <option value="en">English</option>
-        <option value="ja">日本語</option>
-      </select>
-    </label>
   );
 }
 

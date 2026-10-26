@@ -3,7 +3,7 @@ import { stream } from "hono/streaming";
 import { z } from "zod";
 import { isDemoUser } from "@/lib/auth/demo";
 import { getSession } from "@/lib/auth/server";
-import { localeFromRequest } from "@/lib/i18n/locale";
+import { LOCALE } from "@/lib/i18n/locale";
 import {
   consumeQuota,
   deleteInvestigation,
@@ -41,7 +41,7 @@ app.get("/me", async (c) => {
     user: { name: user.name, email: user.email, demo: isDemoUser(user) },
     shop: shop && { name: shop.name, city: shop.city, dataStart: shop.dataStart },
     cities: CITIES.map((city) => ({ id: city.id, label: city.label })),
-    suggestions: shop ? suggestedQuestions(await listConnections(c.env, shop.userId), localeFromRequest(c.req.raw)) : [],
+    suggestions: shop ? suggestedQuestions(await listConnections(c.env, shop.userId), LOCALE) : [],
   });
 });
 
@@ -171,7 +171,7 @@ app.post("/investigations", async (c) => {
     return c.json({ message: "You have reached today's limit of questions. Please try again tomorrow." }, 429);
   }
 
-  const locale = localeFromRequest(c.req.raw);
+  const locale = LOCALE;
   c.header("Content-Type", "application/x-ndjson");
   c.header("Cache-Control", "no-store");
   return stream(c, async (out) => {

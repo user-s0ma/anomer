@@ -1,7 +1,8 @@
 import { and, desc, eq, lt, sql } from "drizzle-orm";
+import { runAnalysis, type AnalysisResult } from "../analysis/explore";
 import { investigate, type InvestigationResult } from "../analysis/investigate";
-import { explain, type Explanation } from "../ai/explain";
-import { readQuestion, type QuestionPlan } from "../ai/question";
+import { answerExplore, explain, type Explanation } from "../ai/explain";
+import { readQuestion, type ExplorePlan, type QuestionPlan } from "../ai/question";
 import { getDb } from "../db/client";
 import { investigation, usage } from "../db/schema";
 import { loadSeries, syncShopData, type ShopRecord } from "../shop/service";
@@ -10,27 +11,34 @@ import { todayIn } from "../util/dates";
 
 export type InvestigationStep = "data" | "reading" | "fitting" | "explaining";
 
-export type InvestigationView = {
-  id: string;
-  question: string;
-  status: "running" | "done" | "failed";
-  plan: QuestionPlan | null;
-  result: InvestigationResult | null;
-  explanation: Explanation | null;
-  error: string | null;
-  createdAt: string;
-};
+type ViewBase = { id: string; question: string; status: "running" | "done" | "failed"; error: string | null; createdAt: string };
+
+/**
+ * 質問1つ。変化の理由を聞いたもの (change) は内訳と説明、それ以外 (explore) は分析の結果と答えを持つ。
+ * 質問を読む前は、どちらか決まっていないので change として返す
+ */
+export type InvestigationView =
+  | (ViewBase & { kind: "change"; plan: QuestionPlan | null; result: InvestigationResult | null; explanation: Explanation | null })
+  | (ViewBase & { kind: "explore"; plan: ExplorePlan; results: AnalysisResult[] | null; answer: { summary: string } | null });
 
 function toView(row: typeof investigation.$inferSelect): InvestigationView {
+  const base = { id: row.id, question: row.question, status: row.status, error: row.error, createdAt: row.createdAt.toISOString() };
+  const plan = row.plan ? (JSON.parse(row.plan) as QuestionPlan | ExplorePlan) : null;
+  if (plan && "kind" in plan && plan.kind === "explore") {
+    return {
+      ...base,
+      kind: "explore",
+      plan,
+      results: row.result ? (JSON.parse(row.result) as AnalysisResult[]) : null,
+      answer: row.explanation ? (JSON.parse(row.explanation) as { summary: string }) : null,
+    };
+  }
   return {
-    id: row.id,
-    question: row.question,
-    status: row.status,
-    plan: row.plan ? (JSON.parse(row.plan) as QuestionPlan) : null,
+    ...base,
+    kind: "change",
+    plan: plan as QuestionPlan | null,
     result: row.result ? (JSON.parse(row.result) as InvestigationResult) : null,
     explanation: row.explanation ? (JSON.parse(row.explanation) as Explanation) : null,
-    error: row.error,
-    createdAt: row.createdAt.toISOString(),
   };
 }
 
@@ -104,7 +112,20 @@ export async function runInvestigation(
       lastDates,
       dataStart: shop.dataStart,
     });
-    if (!reading.answerable) throw new UserFacingError(reading.reason);
+    if (reading.kind === "unanswerable") throw new UserFacingError(reading.reason);
+    if (reading.kind === "explore") {
+      await db.update(investigation).set({ plan: JSON.stringify(reading.plan) }).where(eq(investigation.id, id));
+      await onStep("fitting", id);
+      const results = reading.plan.analyses.map((request) => ({ request, output: runAnalysis(dates, values, request) }));
+      await db.update(investigation).set({ result: JSON.stringify(results) }).where(eq(investigation.id, id));
+      await onStep("explaining", id);
+      const answer = await answerExplore(env, { results, question: input.question, locale: input.locale, shopName: shop.name });
+      await db
+        .update(investigation)
+        .set({ explanation: JSON.stringify(answer), status: "done", finishedAt: new Date() })
+        .where(eq(investigation.id, id));
+      return (await getInvestigation(env, shop.userId, id))!;
+    }
     const { plan } = reading;
     await db.update(investigation).set({ plan: JSON.stringify(plan) }).where(eq(investigation.id, id));
 

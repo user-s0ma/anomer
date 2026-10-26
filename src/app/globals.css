@@ -8,7 +8,7 @@
  * up = 数字を押し上げた原因、down = 押し下げた原因
  */
 @theme {
-  --font-sans: "Inter Variable", "Noto Sans JP Variable", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --color-accent: #4f46e5;
   --color-on-accent: #ffffff;

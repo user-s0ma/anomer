@@ -4,7 +4,7 @@ import { isbot } from "isbot";
 import { renderToReadableStream } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
 import { createI18n } from "@/lib/i18n";
-import { localeFromRequest } from "@/lib/i18n/locale";
+import { LOCALE } from "@/lib/i18n/locale";
 
 export default async function handleRequest(
   request: Request,
@@ -13,7 +13,7 @@ export default async function handleRequest(
   routerContext: EntryContext,
 ) {
   let shellRendered = false;
-  const i18n = createI18n(localeFromRequest(request));
+  const i18n = createI18n(LOCALE);
   const body = await renderToReadableStream(
     <I18nextProvider i18n={i18n}>
       <ServerRouter context={routerContext} url={request.url} />

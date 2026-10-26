@@ -2,17 +2,27 @@ import { useTranslation } from "react-i18next";
 import type { InvestigationView } from "@/lib/api-client";
 import { METRIC_BY_KEY } from "@/lib/sources/definitions";
 import { columnLabel, formatPeriod, formatValue, groupLabel, metricLabel } from "./format";
+import { ExploreDetail } from "./ExploreDetail";
 import { SeriesChart } from "./SeriesChart";
 import { Waterfall } from "./Waterfall";
 
 export function InvestigationDetail({ investigation }: { investigation: InvestigationView }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language as Locale;
-  const { plan, result, explanation } = investigation;
-
   const question = (
     <p className="ml-auto w-fit max-w-[85%] rounded-3xl bg-black/10 px-4 py-2.5 text-sm leading-6">{investigation.question}</p>
   );
+
+  if (investigation.kind === "explore" && investigation.status === "done" && investigation.results && investigation.answer) {
+    return (
+      <article className="mx-auto flex max-w-3xl flex-col gap-4">
+        {question}
+        <ExploreDetail results={investigation.results} answer={investigation.answer.summary} />
+      </article>
+    );
+  }
+  const { plan, result, explanation } =
+    investigation.kind === "change" ? investigation : { plan: null, result: null, explanation: null };
 
   if (investigation.status === "failed" || !plan || !result || !explanation) {
     return (

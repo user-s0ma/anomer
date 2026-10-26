@@ -153,7 +153,7 @@ export default function Sources() {
   const open = openId ? connected.find((c) => c.sourceId === openId) : undefined;
   const query = keyword.trim().toLowerCase();
   const catalog = query
-    ? available.filter((s) => [s.label.en, s.label.ja, s.description.en, s.description.ja, s.format].some((text) => text.toLowerCase().includes(query)))
+    ? available.filter((s) => [s.label.en, s.description.en, s.format].some((text) => text.toLowerCase().includes(query)))
     : available;
 
   return (

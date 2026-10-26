@@ -4,7 +4,7 @@ import { Link, useLoaderData } from "react-router";
 import { ArrowRight } from "lucide-react";
 import type { Route } from "./+types/_index";
 import { SOURCE_ICONS } from "@/components/source-icons";
-import { DemoButton, LanguageSwitcher, Logo } from "@/components/ui";
+import { DemoButton, Logo } from "@/components/ui";
 import { Waterfall } from "@/components/result/Waterfall";
 import { getSession } from "@/lib/auth/server";
 import { SOURCES } from "@/lib/sources/definitions";
@@ -70,7 +70,6 @@ export default function Landing() {
         <div className="ui-container flex h-16 items-center justify-between">
           <Logo className="text-lg" />
           <div className="flex items-center gap-4">
-            <LanguageSwitcher />
             <Link to={signedIn ? "/app" : "/login"} className="text-sm font-semibold text-black/50 transition-colors hover:text-accent">
               {signedIn ? t("common.openApp") : t("common.signIn")}
             </Link>
@@ -171,7 +170,7 @@ export default function Landing() {
                   <div className="min-w-0">
                     <h3 className="font-semibold">{source.label[locale]}</h3>
                     <p className="mt-0.5 font-mono text-xs text-black/50">{source.format}</p>
-                    <p className="mt-2 text-sm leading-6 text-black/70">{source.metrics.map((m) => m.label[locale]).join(locale === "ja" ? "、" : ", ")}</p>
+                    <p className="mt-2 text-sm leading-6 text-black/70">{source.metrics.map((m) => m.label[locale]).join(", ")}</p>
                   </div>
                 </li>
               );
@@ -186,7 +185,7 @@ export default function Landing() {
           <SectionTitle title={t("landing.principles.title")} />
           <div className="mt-12 grid gap-10 md:grid-cols-3">
             {PRINCIPLES.map((key) => (
-              <div key={key} className="border-t-2 border-accent pt-5">
+              <div key={key} className="rounded-2xl bg-accent/5 p-6">
                 <h3 className="text-lg font-semibold">{t(`landing.principles.${key}.title`)}</h3>
                 <p className="mt-2 text-sm leading-6 text-black/50">{t(`landing.principles.${key}.body`)}</p>
               </div>

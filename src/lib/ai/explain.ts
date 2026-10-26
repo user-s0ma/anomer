@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { AnalysisResult } from "../analysis/explore";
 import type { GroupKey, InvestigationResult } from "../analysis/investigate";
 import { METRIC_BY_KEY, SOURCES } from "../sources/definitions";
 import type { QuestionPlan } from "./question";
@@ -12,8 +13,6 @@ export type Explanation = {
   summary: string;
   groups: { key: GroupKey; title: string; explanation: string }[];
 };
-
-const LANGUAGE = { en: "English", ja: "Japanese" } as const;
 
 const round = (value: number) => Math.round(value * 10) / 10;
 
@@ -99,7 +98,7 @@ Rules:
 - If a part's range includes zero, say it may be noise.
 - A day-of-month part is a recurring monthly pattern. You may suggest what it could be (such as paydays) but say it is a guess.
 - Be brief. The page already shows the before and after values, the total change, and each part's contribution next to its bar. Do not repeat those numbers. The summary names the main cause; each part's explanation says what moved in the data.
-- Write for a shop owner, not a statistician. Write in ${LANGUAGE[input.locale]}.
+- Write for a shop owner, not a statistician. Write in English.
 - Return one entry in groups for every part, using its key.`,
       },
       { role: "user", content: `Question: ${input.question}\n\nBreakdown:\n${JSON.stringify(data, null, 2)}` },
@@ -108,4 +107,66 @@ Rules:
   const missing = input.result.groups.filter((g) => !answer.groups.some((a) => a.key === g.key));
   if (missing.length > 0) throw new Error(`説明が足りません: ${missing.map((g) => g.key).join(", ")}`);
   return { summary: answer.summary, groups: answer.groups as Explanation["groups"] };
+}
+
+/** 変化の理由ではない質問への答え。計算した分析の結果だけを渡して書かせる */
+export async function answerExplore(
+  env: AppEnv,
+  input: { results: AnalysisResult[]; question: string; locale: Locale; shopName: string },
+): Promise<{ summary: string }> {
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const data = input.results.map(({ request, output }) => {
+    const metric = METRIC_BY_KEY.get(request.metric)!;
+    const other = request.other ? METRIC_BY_KEY.get(request.other) : undefined;
+    const base = { analysis: output.type, number: metric.label.en, unit: metric.unit, from: output.start, to: output.end };
+    switch (output.type) {
+      case "summary":
+        return { ...base, days: output.days, total: round(output.total), mean: round(output.mean), lowest: output.min, highest: output.max };
+      case "weekday":
+        return { ...base, overall_mean: round(output.overall), mean_by_weekday: Object.fromEntries(output.means.map((m, i) => [weekdays[i], round(m)])) };
+      case "cycles":
+        return {
+          ...base,
+          noise_threshold: round(output.threshold * 100) / 100,
+          peaks: output.peaks.map((p) => ({ every_days: p.days, autocorrelation: round(p.r * 100) / 100 })),
+        };
+      case "trend":
+        return {
+          ...base,
+          change_per_year: round(output.perYear),
+          mean: round(output.mean),
+          first_quarter_mean: round(output.firstQuarterMean),
+          last_quarter_mean: round(output.lastQuarterMean),
+        };
+      case "correlation":
+        return {
+          ...base,
+          other_number: other?.label.en,
+          noise_threshold: round(output.threshold * 100) / 100,
+          correlation_by_days_other_leads: output.byLag.map((l) => ({ days: l.lag, r: round(l.r * 100) / 100 })),
+        };
+      case "extremes":
+        return { ...base, highest_days: output.highest, lowest_days: output.lowest };
+    }
+  });
+
+  return askStructured(env, {
+    name: "answer",
+    schema: z.object({ summary: z.string().describe("Two to four short sentences that answer the question") }),
+    effort: "medium",
+    maxTokens: 8000,
+    messages: [
+      {
+        role: "system",
+        content: `You answer a question from the owner of "${input.shopName}" about their daily numbers. A program has already run the analyses below.
+
+Rules:
+- Use only the numbers given. You may round them, but do not compute new figures or claim anything the analyses do not show.
+- An autocorrelation or correlation below its noise_threshold may be chance; say so instead of claiming a pattern.
+- Correlation is not causation. Say "moves with" rather than "causes".
+- Be brief and concrete. Write for a shop owner, not a statistician. Write in English.`,
+      },
+      { role: "user", content: `Question: ${input.question}\n\nAnalyses:\n${JSON.stringify(data, null, 2)}` },
+    ],
+  });
 }

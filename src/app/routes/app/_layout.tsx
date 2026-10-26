@@ -5,7 +5,7 @@ import { Link, Outlet, redirect, useLoaderData, useLocation, useNavigate } from 
 import { LoaderCircle, LogOut, PanelLeft, Plug, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Route } from "./+types/_layout";
-import { LanguageSwitcher, Logo } from "@/components/ui";
+import { Logo } from "@/components/ui";
 import { RowMenu } from "@/components/ui/RowMenu";
 import {
   ApiError,
@@ -132,10 +132,9 @@ export default function AppLayout() {
         } ${sidebarOpen ? "lg:translate-x-0" : "lg:-translate-x-full"}`}
       >
         <div className="flex h-14 items-center justify-between px-2">
-          <Link to="/" className="px-2" onClick={close}>
+          <Link to="/" className="mr-auto px-2" onClick={close}>
             <Logo className="text-lg" />
           </Link>
-          <LanguageSwitcher className="ml-auto" />
           <button
             className="flex size-10 items-center justify-center rounded-2xl text-black/50 hover:bg-black/10 hover:text-black"
             type="button"

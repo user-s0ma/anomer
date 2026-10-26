@@ -80,11 +80,11 @@ export function suggestedQuestions(connections: Connection[], locale: Locale) {
   if (ads) {
     const from = day(addDays(ads.pausedFrom, 1));
     const to = day(addDays(ads.pausedTo, 1));
-    questions.push(locale === "ja" ? `${from}〜${to}の注文が減ったのはなぜ？` : `Why did orders drop ${from}–${to}?`);
+    questions.push(`Why did orders drop ${from}–${to}?`);
   }
   if (instagram) {
-    questions.push(locale === "ja" ? `${day(instagram.viralReel)}に注文が跳ねたのはなぜ？` : `Why did orders jump on ${day(instagram.viralReel)}?`);
+    questions.push(`Why did orders jump on ${day(instagram.viralReel)}?`);
   }
-  questions.push(locale === "ja" ? "先週の売上が変わったのはなぜ？" : "Why did revenue change last week?");
+  questions.push("Why did revenue change last week?");
   return questions;
 }

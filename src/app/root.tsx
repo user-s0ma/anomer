@@ -1,23 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteLoaderData } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { Toaster } from "sonner";
 import type { Route } from "./+types/root";
 import { translate } from "@/lib/i18n";
-import { localeFromRequest } from "@/lib/i18n/locale";
+import { LOCALE } from "@/lib/i18n/locale";
 import "@fontsource-variable/inter";
-import "@fontsource-variable/noto-sans-jp";
 import "./globals.css";
 
-export async function loader({ request }: Route.LoaderArgs) {
-  return { locale: localeFromRequest(request) };
-}
-
-export function meta({ loaderData }: Route.MetaArgs): Route.MetaDescriptors {
-  const locale = loaderData?.locale ?? "en";
-  const title = translate(locale, "site.title");
-  const description = translate(locale, "site.description");
+export function meta(): Route.MetaDescriptors {
+  const title = translate(LOCALE, "site.title");
+  const description = translate(LOCALE, "site.description");
   return [
     { title },
     { name: "description", content: description },
@@ -33,15 +26,8 @@ export function links(): Route.LinkDescriptors {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const data = useRouteLoaderData("root") as { locale?: Locale } | undefined;
-  const locale = data?.locale ?? "en";
-  const { i18n } = useTranslation();
-  useEffect(() => {
-    if (i18n.language !== locale) void i18n.changeLanguage(locale);
-  }, [i18n, locale]);
-
   return (
-    <html lang={locale}>
+    <html lang={LOCALE}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
