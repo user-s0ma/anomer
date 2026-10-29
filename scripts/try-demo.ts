@@ -1,6 +1,7 @@
 // 手元の確認: 新しい店と同じデモのデータ (Graph API と同じ形の応答、注文の CSV) を本物と同じ読み込み処理で読み、
 // 仕込んだ原因が内訳に出るかを見る
-// npx tsx scripts/try-demo.ts [調べる数字] [変化の始め,終わり,比べる期間の始め,終わり]
+// npx tsx scripts/try-demo.ts [調べる数字] [変化の始め,終わり,比べる期間の始め,終わり] [基準の日]
+// 基準の日 (天気が届いている最後の日) を渡すと、その日に作った店と同じデータになる。本番のお試しの店は 2026-10-23
 import { investigate } from "../src/lib/analysis/investigate";
 import { starterSources } from "../src/lib/shop/setup";
 import { CITY_BY_ID } from "../src/lib/sources/cities";
@@ -16,7 +17,7 @@ const seed = 20261027;
 // 天気が届いている最後の日を基準にする (src/lib/shop/setup.ts と同じ)
 const recentDates = dateRange("2026-09-01", addDays(new Date().toISOString().slice(0, 10), -1));
 const recent = await collect([{ sourceId: "weather", config: { cityId: city.id } }], recentDates, { timezone, uploads: new Map() });
-const end = recentDates[recent.precipitation.findLastIndex((v, i) => v !== null || recent.temp_max[i] !== null)];
+const end = process.argv[4] ?? recentDates[recent.precipitation.findLastIndex((v, i) => v !== null || recent.temp_max[i] !== null)];
 const dataStart = addDays(end, -400);
 
 // 店をつなぐときと同じく、設定とファイルからつなぎ方を作る

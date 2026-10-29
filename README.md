@@ -12,7 +12,7 @@ A small shop has its numbers spread across places: orders at the checkout, Meta 
 
 Anomer answers two kinds of questions:
 
-- **Why did a number change?** You point at a change ("orders Oct 12–18 vs the week before"). Anomer splits the difference into causes, for example ads paused −133 ± 27 orders, paydays +27, Instagram +5, weather +2, and what it could not explain.
+- **Why did a number change?** You point at a change ("orders Oct 12–18 vs the week before"). Anomer splits the difference into causes, for example ads paused −125 ± 29 orders, Instagram +3, trend +3, weather +2, and what it could not explain.
 - **Anything else about the data.** "Is there a weekly cycle?", "What was revenue in September?", "Do ad spend and orders move together?" Anomer runs the matching analyses (summary, day of the week, cycles, trend, correlation with a lag, highest and lowest days) and answers from their results.
 
 In both cases the numbers come from code. Muse Spark reads the question and explains the results; it never produces a figure itself.

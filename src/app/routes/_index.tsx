@@ -18,19 +18,20 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 /**
  * 見本の内訳。架空のパン屋 (Portland、本物の NOAA の天気) のデータで、10/12〜18 を 10/5〜11 と比べて
- * 実際に計算した結果 (デモの店と同じ seed、scripts/try-demo.ts、2026-10-27)。広告は 10/11〜17 に止めてあり、仕込んだ効果は -129.4
+ * 本番のお試しの店で実際に聞いた答え (2026-10-27、動画と同じ)。広告は 10/11〜17 に止めてあり、仕込んだ効果は -129.4
+ * (scripts/try-demo.ts に基準の日 2026-10-23 を渡すと出る)
  */
 const SAMPLE = {
-  before: 1104,
-  after: 978,
+  before: 1105,
+  after: 979,
   planted: -129.4,
   rows: [
-    { key: "ads", value: -133.0, margin: 27.0 },
-    { key: "payday", value: 27.3, margin: 9.5 },
-    { key: "instagram", value: 5.3, margin: 0.8 },
-    { key: "weather", value: 2.2, margin: 0.4 },
+    { key: "ads", value: -124.8, margin: 29.1 },
+    { key: "instagram", value: 3.4, margin: 0.7 },
+    { key: "trend", value: 3.1, margin: 0.6 },
+    { key: "weather", value: 2.3, margin: 0.4 },
   ],
-  unexplained: -27.8,
+  unexplained: -10.1,
 } as const;
 
 const STEPS = ["read", "fit", "explain"] as const;
